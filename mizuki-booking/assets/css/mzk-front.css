@@ -871,39 +871,58 @@ textarea.mzk-input {
 
 /* Detail view ------------------------------------------------------------- */
 
+/* Detail: one column — a full-width photo, then everything underneath. */
+
 .mzk-class--detail::before {
 	height: 4px;
 }
 
-@media (min-width: 900px) {
-	.mzk-class--detail {
-		display: grid;
-		grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-		grid-template-rows: auto 1fr;
-	}
+.mzk-class--detail .mzk-class__media {
+	aspect-ratio: 21 / 9;
+}
 
-	.mzk-class--detail::before {
-		grid-column: 1 / -1;
-	}
-
+@media (max-width: 700px) {
 	.mzk-class--detail .mzk-class__media {
-		aspect-ratio: auto;
-		height: 100%;
+		aspect-ratio: 4 / 3;
 	}
+}
 
+.mzk-class--detail .mzk-class__body {
+	padding: 36px 32px 32px;
+}
+
+@media (min-width: 900px) {
 	.mzk-class--detail .mzk-class__body {
-		padding: 40px 40px 36px;
+		padding: 44px 48px 40px;
 	}
 }
 
 .mzk-class--detail .mzk-class__name {
-	font-size: 1.05em;
+	font-size: 1.15em;
 	margin-bottom: 14px;
 }
 
 .mzk-class--detail .mzk-class__summary {
-	font-size: 1em;
+	font-size: 1.02em;
 	color: var(--mzk-text);
+	max-width: 68ch;
+}
+
+.mzk-class--detail .mzk-class__desc {
+	max-width: 68ch;
+}
+
+/* The call to action sits with the content, not pinned to the bottom of a
+   flex column, so it never collides with the dates heading below it. */
+
+.mzk-class--detail .mzk-class__actions {
+	margin-top: 0;
+	margin-bottom: 8px;
+	padding-top: 0;
+}
+
+.mzk-class--detail .mzk-notice {
+	margin-bottom: 20px;
 }
 
 .mzk-class__desc {
@@ -917,7 +936,9 @@ textarea.mzk-input {
 }
 
 .mzk-class--detail .mzk-dash__title {
-	margin: 30px 0 14px;
+	margin: 34px 0 16px;
+	padding-top: 26px;
+	border-top: 1px solid var(--mzk-border);
 	font-size: 0.75em;
 }
 

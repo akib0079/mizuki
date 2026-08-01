@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.2.0
+Stable tag: 3.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,11 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.2.1 =
+* Class detail page is now a single column: a full-width photo across the top, with the description, details, booking button and dates underneath.
+* Fixed the booking button colliding with the Upcoming dates heading on the class page.
+* Confirmation e-mails now fall back to the student dashboard or booking page if the manage-booking page is missing, instead of the site home page.
 
 = 3.2.0 =
 * Each class now says how students book it: on the calendar, pay-first through the shop, or as a course. The booking gate follows that setting.

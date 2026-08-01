@@ -275,8 +275,18 @@ class MZK_Utils {
 	 */
 	public static function manage_url( $booking ) {
 		$booking = (object) $booking;
+
+		// Fall back through the pages that can still do something useful, rather
+		// than dropping the student on the home page if the manage page is missing.
 		$page_id = (int) MZK_Install::get_setting( 'manage_page_id' );
-		$base    = $page_id ? get_permalink( $page_id ) : home_url( '/' );
+		if ( ! $page_id || ! get_post_status( $page_id ) ) {
+			$page_id = (int) MZK_Install::get_setting( 'dashboard_page_id' );
+		}
+		if ( ! $page_id || ! get_post_status( $page_id ) ) {
+			$page_id = (int) MZK_Install::get_setting( 'booking_page_id' );
+		}
+
+		$base = ( $page_id && get_post_status( $page_id ) ) ? get_permalink( $page_id ) : home_url( '/' );
 		return add_query_arg(
 			array(
 				'mzk_booking' => (int) $booking->id,
