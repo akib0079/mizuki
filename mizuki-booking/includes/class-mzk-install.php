@@ -25,6 +25,7 @@ class MZK_Install {
 			'months_ahead'         => 3,
 			'reminder_days_before' => 2,
 			'reminder_hour'        => 9,
+			'classes_page_id'      => 0,
 			'booking_page_id'      => 0,
 			'manage_page_id'       => 0,
 			'login_page_id'        => 0,
@@ -195,6 +196,10 @@ class MZK_Install {
 			cancel_cutoff_hours int(11) NOT NULL DEFAULT 72,
 			max_reschedules smallint(5) unsigned NOT NULL DEFAULT 0,
 			requires_approval tinyint(1) NOT NULL DEFAULT 0,
+			summary varchar(255) NOT NULL DEFAULT '',
+			price_note varchar(120) NOT NULL DEFAULT '',
+			image_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			booking_url varchar(255) NOT NULL DEFAULT '',
 			description text NULL,
 			sort_order smallint(5) NOT NULL DEFAULT 0,
 			active tinyint(1) NOT NULL DEFAULT 1,
@@ -407,14 +412,47 @@ class MZK_Install {
 			),
 		);
 
+		$copy = self::seed_copy();
+
 		foreach ( $seeds as $seed ) {
 			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE slug = %s", $seed['slug'] ) ); // phpcs:ignore WordPress.DB
+
 			if ( $exists ) {
+				// Fill in the classes-page copy for sites that installed before it
+				// existed, without touching anything the studio has written.
+				if ( isset( $copy[ $seed['slug'] ] ) ) {
+					$wpdb->query( // phpcs:ignore WordPress.DB
+						$wpdb->prepare(
+							"UPDATE {$table} SET summary = %s WHERE id = %d AND (summary IS NULL OR summary = '')", // phpcs:ignore WordPress.DB
+							$copy[ $seed['slug'] ],
+							(int) $exists
+						)
+					);
+				}
 				continue;
+			}
+
+			if ( isset( $copy[ $seed['slug'] ] ) ) {
+				$seed['summary'] = $copy[ $seed['slug'] ];
 			}
 			$seed['created_at'] = $now;
 			$wpdb->insert( $table, $seed ); // phpcs:ignore WordPress.DB
 		}
+	}
+
+	/**
+	 * Starter one-liners for the classes page, so it is never blank.
+	 * The studio can rewrite every one of these.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function seed_copy() {
+		return array(
+			'fresh-flower'     => __( 'Work with seasonal blooms and take home an arrangement you made yourself. No experience needed.', 'mizuki-booking' ),
+			'ikebana'          => __( 'The Japanese art of arranging flowers through balance, movement and space. A calm, unhurried class.', 'mizuki-booking' ),
+			'preserved-flower' => __( 'A certified course in Korean-style preserved flower design, taken at your own pace over a set number of sessions.', 'mizuki-booking' ),
+			'ifda'             => __( 'The official IFDA certification course, accredited by Korea IFDA and taught here in Singapore.', 'mizuki-booking' ),
+		);
 	}
 
 	/**

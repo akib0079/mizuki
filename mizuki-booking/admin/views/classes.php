@@ -180,8 +180,55 @@ $types   = MZK_Class_Types::all();
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><?php esc_html_e( 'Short summary', 'mizuki-booking' ); ?></th>
+					<td>
+						<input type="text" name="summary" class="large-text" maxlength="255"
+							value="<?php echo esc_attr( $current ? $current->summary : '' ); ?>"
+							placeholder="<?php esc_attr_e( 'One line shown on the classes page, e.g. “A gentle introduction to Japanese flower arranging.”', 'mizuki-booking' ); ?>" />
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( 'Description', 'mizuki-booking' ); ?></th>
-					<td><textarea name="description" rows="3" class="large-text"><?php echo esc_textarea( $current ? $current->description : '' ); ?></textarea></td>
+					<td>
+						<textarea name="description" rows="5" class="large-text"><?php echo esc_textarea( $current ? $current->description : '' ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'The fuller explanation shown on the class’s own page.', 'mizuki-booking' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Price note', 'mizuki-booking' ); ?></th>
+					<td>
+						<input type="text" name="price_note" class="regular-text" maxlength="120"
+							value="<?php echo esc_attr( $current ? $current->price_note : '' ); ?>"
+							placeholder="<?php esc_attr_e( 'e.g. $90 per session, or $1,800 for 25 sessions', 'mizuki-booking' ); ?>" />
+						<p class="description"><?php esc_html_e( 'Free text, shown on the classes page. Leave empty to hide.', 'mizuki-booking' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Photo', 'mizuki-booking' ); ?></th>
+					<td>
+						<?php $image_id = $current ? (int) $current->image_id : 0; ?>
+						<div class="mzk-media" data-mzk-media>
+							<div class="mzk-media__preview">
+								<?php if ( $image_id ) : ?>
+									<?php echo wp_get_attachment_image( $image_id, 'thumbnail' ); ?>
+								<?php endif; ?>
+							</div>
+							<input type="hidden" name="image_id" value="<?php echo esc_attr( $image_id ); ?>" />
+							<button type="button" class="button" data-mzk-media-pick><?php esc_html_e( 'Choose photo', 'mizuki-booking' ); ?></button>
+							<button type="button" class="button" data-mzk-media-clear><?php esc_html_e( 'Remove', 'mizuki-booking' ); ?></button>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Enrol button goes to', 'mizuki-booking' ); ?></th>
+					<td>
+						<input type="url" name="booking_url" class="large-text"
+							value="<?php echo esc_attr( $current ? $current->booking_url : '' ); ?>"
+							placeholder="<?php esc_attr_e( 'Leave empty to use the booking calendar', 'mizuki-booking' ); ?>" />
+						<p class="description">
+							<?php esc_html_e( 'For paid classes, paste the WooCommerce product link here. Otherwise the button opens the calendar filtered to this class.', 'mizuki-booking' ); ?>
+						</p>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Order', 'mizuki-booking' ); ?></th>

@@ -117,6 +117,10 @@ class MZK_Class_Types {
 			'max_reschedules'         => max( 0, (int) ( $data['max_reschedules'] ?? 0 ) ),
 			'requires_approval'       => empty( $data['requires_approval'] ) ? 0 : 1,
 			'description'             => isset( $data['description'] ) ? wp_kses_post( $data['description'] ) : '',
+			'summary'                 => isset( $data['summary'] ) ? sanitize_text_field( $data['summary'] ) : '',
+			'price_note'              => isset( $data['price_note'] ) ? sanitize_text_field( $data['price_note'] ) : '',
+			'image_id'                => (int) ( $data['image_id'] ?? 0 ),
+			'booking_url'             => isset( $data['booking_url'] ) ? esc_url_raw( $data['booking_url'] ) : '',
 			'sort_order'              => (int) ( $data['sort_order'] ?? 0 ),
 			'active'                  => empty( $data['active'] ) ? 0 : 1,
 		);

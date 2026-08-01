@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.1
+Stable tag: 3.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,12 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.1.0 =
+* Fixed: the My Account endpoints were registered at the site root, which stopped the "My Classes" page resolving at /my-classes/ and showed the blog index instead.
+* New [mizuki_classes] page: what each class is, price, length, next dates and an Enrol button. Added to the setup wizard as "Our Classes".
+* Classes now carry a summary, price note, photo and optional booking link, editable under Classes & Rules.
+* The calendar now honours ?class=slug, so Enrol and "Book a session" links land on the right class.
 
 = 3.0.1 =
 * Architecture review fixes: unpaid checkouts no longer create student accounts or send welcome e-mails; course packages can no longer be over-spent by simultaneous bookings; the calendar endpoint no longer writes on every page view; added composite indexes; uninstall cleans up fully.

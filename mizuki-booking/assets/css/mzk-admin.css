@@ -302,3 +302,17 @@
 .button-hero {
 	margin-top: 6px;
 }
+
+.mzk-media {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-media__preview img {
+	display: block;
+	max-width: 90px;
+	height: auto;
+	border: 1px solid #dcdcde;
+}

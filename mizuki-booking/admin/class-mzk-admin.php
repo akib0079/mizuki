@@ -105,6 +105,11 @@ class MZK_Admin {
 		}
 		wp_enqueue_style( 'mzk-admin', MZK_URL . 'assets/css/mzk-admin.css', array(), MZK_VERSION );
 		wp_enqueue_script( 'mzk-admin', MZK_URL . 'assets/js/mzk-admin.js', array(), MZK_VERSION, true );
+
+		// The class editor picks a photo from the media library.
+		if ( false !== strpos( $hook, 'mzk-classes' ) ) {
+			wp_enqueue_media();
+		}
 		wp_localize_script(
 			'mzk-admin',
 			'MZK_ADMIN',
@@ -549,6 +554,10 @@ class MZK_Admin {
 						'max_reschedules'         => (int) ( $post['max_reschedules'] ?? 0 ),
 						'requires_approval'       => ! empty( $post['requires_approval'] ),
 						'description'             => $post['description'] ?? '',
+						'summary'                 => $post['summary'] ?? '',
+						'price_note'              => $post['price_note'] ?? '',
+						'image_id'                => (int) ( $post['image_id'] ?? 0 ),
+						'booking_url'             => $post['booking_url'] ?? '',
 						'sort_order'              => (int) ( $post['sort_order'] ?? 0 ),
 						'active'                  => ! empty( $post['active'] ),
 					)

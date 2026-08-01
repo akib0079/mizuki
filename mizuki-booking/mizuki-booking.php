@@ -3,7 +3,7 @@
  * Plugin Name:       Mizuki Booking
  * Plugin URI:        https://mizuki.com.sg/
  * Description:       Class booking calendar for Mizuki Flower Studio: multi-session days, per-session participant limits, 2+ month schedule, rule-based rescheduling, blackout dates, course session packages with extensions, auto confirmation and reminder emails.
- * Version:           3.0.1
+ * Version:           3.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Avix Digital Agency
@@ -14,8 +14,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MZK_VERSION', '3.0.1' );
-define( 'MZK_DB_VERSION', '3.0.1' );
+define( 'MZK_VERSION', '3.1.0' );
+define( 'MZK_DB_VERSION', '3.1.0' );
 define( 'MZK_FILE', __FILE__ );
 define( 'MZK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MZK_URL', plugin_dir_url( __FILE__ ) );
@@ -38,6 +38,7 @@ require_once MZK_PATH . 'includes/class-mzk-account.php';
 require_once MZK_PATH . 'includes/class-mzk-students.php';
 require_once MZK_PATH . 'includes/class-mzk-setup.php';
 require_once MZK_PATH . 'includes/class-mzk-manage.php';
+require_once MZK_PATH . 'includes/class-mzk-classes-page.php';
 require_once MZK_PATH . 'admin/class-mzk-admin.php';
 
 register_activation_hook( __FILE__, array( 'MZK_Install', 'activate' ) );
@@ -57,6 +58,7 @@ function mzk_init() {
 	MZK_Account::init();
 	MZK_Students::init();
 	MZK_Manage::init();
+	MZK_Classes_Page::init();
 
 	if ( is_admin() ) {
 		MZK_Admin::init();

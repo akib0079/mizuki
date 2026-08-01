@@ -37,11 +37,24 @@ Every requirement the client listed, mapped to a feature:
 
 Put these on any page or in any Elementor shortcode widget.
 
+### Classes
+
+| Shortcode | What it shows |
+|---|---|
+| `[mizuki_classes]` | Every class as a card — summary, length, class size, price, next dates, **Enrol** button |
+| `[mizuki_classes class="ikebana"]` | One class in full detail, with all its upcoming dates |
+| `[mizuki_classes columns="2"]` | Change the grid width |
+
+This is the page to link from the main menu — it's where a student who doesn't know the studio yet starts. Each card's **Enrol** button goes to the WooCommerce product if the class has one set, otherwise to the calendar filtered to that class.
+
+Set each class's summary, description, price note and photo under **Bookings → Classes & Rules**.
+
 ### Booking calendar
 
 | Shortcode | What it shows |
 |---|---|
 | `[mizuki_calendar]` | Full calendar, every class, with a class filter |
+| `?class=ikebana` on the URL | Preselects a class — how the Enrol buttons link in |
 | `[mizuki_calendar class="ikebana"]` | One class only |
 | `[mizuki_calendar class="preserved-flower"]` | One class only |
 | `[mizuki_calendar months="3"]` | More months than the default (minimum 2) |

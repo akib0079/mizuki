@@ -27,6 +27,13 @@ class MZK_Setup {
 	 */
 	public static function pages() {
 		return array(
+			'classes_page_id'   => array(
+				'title'     => __( 'Our Classes', 'mizuki-booking' ),
+				'slug'      => 'our-classes',
+				'shortcode' => '[mizuki_classes]',
+				'intro'     => __( 'Every class we run, what to expect, and when the next dates are.', 'mizuki-booking' ),
+				'desc'      => __( 'What each class is, what it costs, and an Enrol button. The page to link from your menu.', 'mizuki-booking' ),
+			),
 			'booking_page_id'   => array(
 				'title'     => __( 'Book a Class', 'mizuki-booking' ),
 				'slug'      => 'book-a-class',

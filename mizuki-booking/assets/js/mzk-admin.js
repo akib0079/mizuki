@@ -19,6 +19,42 @@
 		}
 	} );
 
+	// Class photo picker, using the WordPress media library.
+	var media = document.querySelector( '[data-mzk-media]' );
+	if ( media && window.wp && window.wp.media ) {
+		var input = media.querySelector( 'input[type="hidden"]' );
+		var preview = media.querySelector( '.mzk-media__preview' );
+		var frame = null;
+
+		media.querySelector( '[data-mzk-media-pick]' ).addEventListener( 'click', function () {
+			if ( ! frame ) {
+				frame = window.wp.media( {
+					title: 'Choose a photo for this class',
+					library: { type: 'image' },
+					button: { text: 'Use this photo' },
+					multiple: false
+				} );
+
+				frame.on( 'select', function () {
+					var item = frame.state().get( 'selection' ).first().toJSON();
+					input.value = item.id;
+					var url = ( item.sizes && item.sizes.thumbnail ) ? item.sizes.thumbnail.url : item.url;
+					preview.innerHTML = '';
+					var img = document.createElement( 'img' );
+					img.src = url;
+					img.alt = '';
+					preview.appendChild( img );
+				} );
+			}
+			frame.open();
+		} );
+
+		media.querySelector( '[data-mzk-media-clear]' ).addEventListener( 'click', function () {
+			input.value = '0';
+			preview.innerHTML = '';
+		} );
+	}
+
 	// Fill duration and capacity from the chosen class defaults, but only while
 	// the fields still hold the previous defaults (never overwrite manual edits).
 	var picker = document.querySelector( '[data-mzk-class-defaults]' );

@@ -40,8 +40,12 @@ class MZK_Account {
 	 * Register the rewrite endpoints.
 	 */
 	public static function add_endpoints() {
-		add_rewrite_endpoint( self::EP_CLASSES, EP_ROOT | EP_PAGES );
-		add_rewrite_endpoint( self::EP_COURSES, EP_ROOT | EP_PAGES );
+		// EP_PAGES only — never EP_ROOT. An EP_ROOT endpoint claims the top-level
+		// URL of the same name, which stopped WordPress resolving the "My Classes"
+		// page at /my-classes/ and silently fell back to the blog index.
+		// These only ever need to hang off the My Account page.
+		add_rewrite_endpoint( self::EP_CLASSES, EP_PAGES );
+		add_rewrite_endpoint( self::EP_COURSES, EP_PAGES );
 	}
 
 	/**

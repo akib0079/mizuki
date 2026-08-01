@@ -154,12 +154,15 @@ class MZK_Shortcodes {
 			$months = max( 2, (int) MZK_Install::get_setting( 'months_ahead', 3 ) );
 		}
 
+		// ?class=ikebana preselects a class, so "Book a session" links from the
+		// class pages and the student dashboard land on the right filter.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$requested = isset( $_GET['class'] ) ? sanitize_title( wp_unslash( $_GET['class'] ) ) : '';
+
 		$class_slug = '';
-		if ( $atts['class'] ) {
-			$type = MZK_Class_Types::resolve( $atts['class'] );
-			if ( $type ) {
-				$class_slug = $type->slug;
-			}
+		$type       = MZK_Class_Types::resolve( $requested ? $requested : $atts['class'] );
+		if ( $type ) {
+			$class_slug = $type->slug;
 		}
 
 		ob_start();
