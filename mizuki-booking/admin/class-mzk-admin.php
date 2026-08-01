@@ -1,0 +1,641 @@
+<?php
+/**
+ * Admin: menus, form handling, notices.
+ *
+ * @package Mizuki_Booking
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+class MZK_Admin {
+
+	const SLUG = 'mizuki-booking';
+
+	/**
+	 * Register admin hooks.
+	 */
+	public static function init() {
+		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'admin_post_mzk_action', array( __CLASS__, 'handle' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
+		add_filter( 'plugin_action_links_' . MZK_BASENAME, array( __CLASS__, 'action_links' ) );
+	}
+
+	/**
+	 * Settings shortcut on the plugins screen.
+	 *
+	 * @param array $links Existing links.
+	 * @return array
+	 */
+	public static function action_links( $links ) {
+		array_unshift(
+			$links,
+			'<a href="' . esc_url( admin_url( 'admin.php?page=' . self::SLUG ) ) . '">' . esc_html__( 'Schedule', 'mizuki-booking' ) . '</a>'
+		);
+		return $links;
+	}
+
+	/**
+	 * Admin menu tree.
+	 */
+	public static function menu() {
+		$cap = MZK_Utils::cap();
+
+		add_menu_page(
+			__( 'Mizuki Booking', 'mizuki-booking' ),
+			__( 'Bookings', 'mizuki-booking' ),
+			$cap,
+			self::SLUG,
+			array( __CLASS__, 'render_schedule' ),
+			'dashicons-calendar-alt',
+			26
+		);
+
+		$pages = array(
+			self::SLUG              => __( 'Schedule', 'mizuki-booking' ),
+			'mzk-sessions'          => __( 'Sessions', 'mizuki-booking' ),
+			'mzk-bookings'          => __( 'Bookings', 'mizuki-booking' ),
+			'mzk-enrollments'       => __( 'Course Packages', 'mizuki-booking' ),
+			'mzk-blackouts'         => __( 'Blocked Dates', 'mizuki-booking' ),
+			'mzk-classes'           => __( 'Classes & Rules', 'mizuki-booking' ),
+			'mzk-settings'          => __( 'Settings', 'mizuki-booking' ),
+		);
+
+		$callbacks = array(
+			self::SLUG        => 'render_schedule',
+			'mzk-sessions'    => 'render_sessions',
+			'mzk-bookings'    => 'render_bookings',
+			'mzk-enrollments' => 'render_enrollments',
+			'mzk-blackouts'   => 'render_blackouts',
+			'mzk-classes'     => 'render_classes',
+			'mzk-settings'    => 'render_settings',
+		);
+
+		foreach ( $pages as $slug => $title ) {
+			add_submenu_page(
+				self::SLUG,
+				$title,
+				$title,
+				$cap,
+				$slug,
+				array( __CLASS__, $callbacks[ $slug ] )
+			);
+		}
+	}
+
+	/**
+	 * Enqueue admin assets on plugin screens only.
+	 *
+	 * @param string $hook Current admin page hook.
+	 */
+	public static function assets( $hook ) {
+		if ( false === strpos( $hook, 'mizuki-booking' ) && false === strpos( $hook, 'mzk-' ) ) {
+			return;
+		}
+		wp_enqueue_style( 'mzk-admin', MZK_URL . 'assets/css/mzk-admin.css', array(), MZK_VERSION );
+		wp_enqueue_script( 'mzk-admin', MZK_URL . 'assets/js/mzk-admin.js', array(), MZK_VERSION, true );
+		wp_localize_script(
+			'mzk-admin',
+			'MZK_ADMIN',
+			array(
+				'confirmDelete'  => __( 'Delete this permanently?', 'mizuki-booking' ),
+				'confirmCancel'  => __( 'Cancel this booking? The student will be notified.', 'mizuki-booking' ),
+				'confirmSession' => __( 'Cancel this session? Students booked on it keep their booking until you move or cancel them.', 'mizuki-booking' ),
+			)
+		);
+	}
+
+	/* ------------------------------------------------------------- notices */
+
+	/**
+	 * Queue an admin notice for the current user.
+	 *
+	 * @param string $type    success|error|warning|info.
+	 * @param string $message Message text.
+	 */
+	public static function add_notice( $type, $message ) {
+		$key      = 'mzk_notices_' . get_current_user_id();
+		$existing = (array) get_transient( $key );
+		$existing[] = array(
+			'type'    => $type,
+			'message' => $message,
+		);
+		set_transient( $key, $existing, 60 );
+	}
+
+	/**
+	 * Print and clear queued notices.
+	 */
+	public static function notices() {
+		$key    = 'mzk_notices_' . get_current_user_id();
+		$queued = get_transient( $key );
+		if ( ! $queued ) {
+			return;
+		}
+		delete_transient( $key );
+		foreach ( (array) $queued as $notice ) {
+			printf(
+				'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
+				esc_attr( $notice['type'] ),
+				esc_html( $notice['message'] )
+			);
+		}
+	}
+
+	/**
+	 * Redirect back to a plugin screen.
+	 *
+	 * @param string $page  Page slug.
+	 * @param array  $extra Extra query args.
+	 */
+	private static function redirect( $page, $extra = array() ) {
+		$url = add_query_arg( array_merge( array( 'page' => $page ), $extra ), admin_url( 'admin.php' ) );
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Translate a WP_Error or success into a queued notice.
+	 *
+	 * @param mixed  $result  Result value.
+	 * @param string $success Success message.
+	 * @return bool Whether the operation succeeded.
+	 */
+	private static function report( $result, $success ) {
+		if ( is_wp_error( $result ) ) {
+			self::add_notice( 'error', $result->get_error_message() );
+			return false;
+		}
+		self::add_notice( 'success', $success );
+		return true;
+	}
+
+	/* -------------------------------------------------------- form handling */
+
+	/**
+	 * Central dispatcher for every admin form and row action.
+	 */
+	public static function handle() {
+		MZK_Utils::require_cap();
+
+		$action = isset( $_REQUEST['mzk_do'] ) ? sanitize_key( wp_unslash( $_REQUEST['mzk_do'] ) ) : '';
+		check_admin_referer( 'mzk_' . $action );
+
+		$post = wp_unslash( $_REQUEST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- individual fields are sanitised downstream.
+
+		switch ( $action ) {
+
+			/* ---- sessions ---- */
+
+			case 'save_session':
+				$result = MZK_Sessions::save(
+					array(
+						'id'                  => (int) ( $post['id'] ?? 0 ),
+						'class_type_id'       => (int) ( $post['class_type_id'] ?? 0 ),
+						'title'               => $post['title'] ?? '',
+						'session_date'        => $post['session_date'] ?? '',
+						'start_time'          => $post['start_time'] ?? '',
+						'duration_minutes'    => (int) ( $post['duration_minutes'] ?? 0 ),
+						'capacity'            => (int) ( $post['capacity'] ?? 0 ),
+						'capacity_adjustment' => (int) ( $post['capacity_adjustment'] ?? 0 ),
+						'status'              => $post['status'] ?? 'open',
+						'notes'               => $post['notes'] ?? '',
+					)
+				);
+				self::report( $result, __( 'Session saved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-sessions', array( 'from' => sanitize_text_field( $post['return_from'] ?? '' ) ) );
+				break;
+
+			case 'adjust_capacity':
+				$result = MZK_Sessions::adjust_capacity( (int) ( $post['id'] ?? 0 ), (int) ( $post['delta'] ?? 0 ) );
+				self::report( $result, __( 'Participant limit updated.', 'mizuki-booking' ) );
+				self::redirect( sanitize_key( $post['return_page'] ?? 'mzk-sessions' ) );
+				break;
+
+			case 'session_status':
+				$result = MZK_Sessions::set_status( (int) ( $post['id'] ?? 0 ), sanitize_key( $post['status'] ?? 'open' ) );
+				self::report( $result, __( 'Session status updated.', 'mizuki-booking' ) );
+				self::redirect( sanitize_key( $post['return_page'] ?? 'mzk-sessions' ) );
+				break;
+
+			case 'delete_session':
+				$result = MZK_Sessions::delete( (int) ( $post['id'] ?? 0 ), ! empty( $post['force'] ) );
+				self::report( $result, __( 'Session deleted.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-sessions' );
+				break;
+
+			case 'save_template':
+				$result = MZK_Sessions::save_template(
+					array(
+						'id'               => (int) ( $post['id'] ?? 0 ),
+						'class_type_id'    => (int) ( $post['class_type_id'] ?? 0 ),
+						'label'            => $post['label'] ?? '',
+						'weekday'          => (int) ( $post['weekday'] ?? 0 ),
+						'start_time'       => $post['start_time'] ?? '',
+						'duration_minutes' => (int) ( $post['duration_minutes'] ?? 0 ),
+						'capacity'         => (int) ( $post['capacity'] ?? 0 ),
+						'valid_from'       => $post['valid_from'] ?? '',
+						'valid_until'      => $post['valid_until'] ?? '',
+						'active'           => ! empty( $post['active'] ),
+					)
+				);
+				self::report( $result, __( 'Weekly session saved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
+				break;
+
+			case 'delete_template':
+				MZK_Sessions::delete_template( (int) ( $post['id'] ?? 0 ) );
+				self::add_notice( 'success', __( 'Weekly session removed. Sessions already on the calendar were kept.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
+				break;
+
+			case 'generate':
+				$stats = MZK_Sessions::generate(
+					sanitize_text_field( $post['from'] ?? '' ),
+					sanitize_text_field( $post['to'] ?? '' ),
+					(int) ( $post['template_id'] ?? 0 )
+				);
+				self::add_notice(
+					'success',
+					sprintf(
+						/* translators: 1: created, 2: skipped, 3: blocked. */
+						__( 'Schedule generated: %1$d sessions created, %2$d already existed, %3$d skipped on blocked dates.', 'mizuki-booking' ),
+						$stats['created'],
+						$stats['skipped'],
+						$stats['blocked']
+					)
+				);
+				self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
+				break;
+
+			case 'extend_horizon':
+				$stats = MZK_Sessions::ensure_horizon();
+				self::add_notice(
+					'success',
+					sprintf(
+						/* translators: %d: number of sessions created. */
+						__( 'Schedule topped up: %d new sessions created.', 'mizuki-booking' ),
+						$stats['created']
+					)
+				);
+				self::redirect( self::SLUG );
+				break;
+
+			/* ---- bookings ---- */
+
+			case 'save_booking':
+				$id = (int) ( $post['id'] ?? 0 );
+				if ( $id ) {
+					$result = MZK_Bookings::set_status( $id, sanitize_key( $post['status'] ?? 'confirmed' ) );
+					self::report( $result, __( 'Booking updated.', 'mizuki-booking' ) );
+				} else {
+					$result = MZK_Bookings::create(
+						array(
+							'session_id'      => (int) ( $post['session_id'] ?? 0 ),
+							'student_name'    => $post['student_name'] ?? '',
+							'email'           => $post['email'] ?? '',
+							'phone'           => $post['phone'] ?? '',
+							'notes'           => $post['notes'] ?? '',
+							'seats'           => (int) ( $post['seats'] ?? 1 ),
+							'source'          => sanitize_key( $post['source'] ?? 'admin' ),
+							'allow_overbook'  => ! empty( $post['allow_overbook'] ),
+							'allow_duplicate' => ! empty( $post['allow_overbook'] ),
+							'skip_emails'     => ! empty( $post['skip_emails'] ),
+						)
+					);
+					self::report( $result, __( 'Booking added.', 'mizuki-booking' ) );
+				}
+				self::redirect( 'mzk-bookings' );
+				break;
+
+			case 'booking_status':
+				$result = MZK_Bookings::set_status( (int) ( $post['id'] ?? 0 ), sanitize_key( $post['status'] ?? '' ) );
+				self::report( $result, __( 'Booking updated.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings', self::preserve_filters( $post ) );
+				break;
+
+			case 'cancel_booking':
+				$result = MZK_Bookings::cancel(
+					(int) ( $post['id'] ?? 0 ),
+					array(
+						'by_admin'    => true,
+						'skip_emails' => ! empty( $post['skip_emails'] ),
+						'reason'      => $post['reason'] ?? '',
+					)
+				);
+				self::report( $result, __( 'Booking cancelled.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings', self::preserve_filters( $post ) );
+				break;
+
+			case 'move_booking':
+				$result = MZK_Bookings::reschedule(
+					(int) ( $post['id'] ?? 0 ),
+					(int) ( $post['session_id'] ?? 0 ),
+					array(
+						'by_admin'    => true,
+						'skip_emails' => ! empty( $post['skip_emails'] ),
+					)
+				);
+				self::report( $result, __( 'Booking moved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings', self::preserve_filters( $post ) );
+				break;
+
+			case 'delete_booking':
+				MZK_Bookings::delete( (int) ( $post['id'] ?? 0 ) );
+				self::add_notice( 'success', __( 'Booking deleted.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings' );
+				break;
+
+			case 'resend_confirmation':
+				$sent = MZK_Mailer::send_confirmation( (int) ( $post['id'] ?? 0 ) );
+				self::add_notice(
+					$sent ? 'success' : 'error',
+					$sent ? __( 'Confirmation e-mail resent.', 'mizuki-booking' ) : __( 'The e-mail could not be sent.', 'mizuki-booking' )
+				);
+				self::redirect( 'mzk-bookings', self::preserve_filters( $post ) );
+				break;
+
+			/* ---- enrollments ---- */
+
+			case 'save_enrollment':
+				$result = MZK_Enrollments::save(
+					array(
+						'id'             => (int) ( $post['id'] ?? 0 ),
+						'class_type_id'  => (int) ( $post['class_type_id'] ?? 0 ),
+						'student_name'   => $post['student_name'] ?? '',
+						'email'          => $post['email'] ?? '',
+						'phone'          => $post['phone'] ?? '',
+						'sessions_total' => (int) ( $post['sessions_total'] ?? 0 ),
+						'start_date'     => $post['start_date'] ?? '',
+						'expiry_date'    => $post['expiry_date'] ?? '',
+						'status'         => sanitize_key( $post['status'] ?? 'active' ),
+						'notes'          => $post['notes'] ?? '',
+					)
+				);
+				self::report( $result, __( 'Course package saved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-enrollments' );
+				break;
+
+			case 'extend_enrollment':
+				$result = MZK_Enrollments::extend(
+					(int) ( $post['id'] ?? 0 ),
+					(int) ( $post['add_sessions'] ?? 0 ),
+					$post['new_expiry'] ?? '',
+					$post['reason'] ?? ''
+				);
+				self::report( $result, __( 'Course package extended.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-enrollments', array( 'edit' => (int) ( $post['id'] ?? 0 ) ) );
+				break;
+
+			case 'delete_enrollment':
+				MZK_Enrollments::delete( (int) ( $post['id'] ?? 0 ) );
+				self::add_notice( 'success', __( 'Course package deleted.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-enrollments' );
+				break;
+
+			/* ---- blackouts ---- */
+
+			case 'save_blackout':
+				$result = MZK_Blackouts::save(
+					array(
+						'id'            => (int) ( $post['id'] ?? 0 ),
+						'class_type_id' => (int) ( $post['class_type_id'] ?? 0 ),
+						'start_date'    => $post['start_date'] ?? '',
+						'end_date'      => $post['end_date'] ?? '',
+						'reason'        => $post['reason'] ?? '',
+					)
+				);
+				if ( self::report( $result, __( 'Blocked dates saved. Sessions in that period are now hidden from students.', 'mizuki-booking' ) ) ) {
+					$affected = MZK_Blackouts::affected_bookings( (int) $result );
+					if ( $affected ) {
+						self::add_notice(
+							'warning',
+							sprintf(
+								/* translators: %d: number of bookings. */
+								_n(
+									'Heads up: %d existing booking falls inside these dates. Move or cancel it from the Bookings screen.',
+									'Heads up: %d existing bookings fall inside these dates. Move or cancel them from the Bookings screen.',
+									count( $affected ),
+									'mizuki-booking'
+								),
+								count( $affected )
+							)
+						);
+					}
+				}
+				self::redirect( 'mzk-blackouts' );
+				break;
+
+			case 'delete_blackout':
+				MZK_Blackouts::delete( (int) ( $post['id'] ?? 0 ) );
+				self::add_notice( 'success', __( 'Blocked dates removed. Re-open any sessions you still want to run.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-blackouts' );
+				break;
+
+			/* ---- class types ---- */
+
+			case 'save_class':
+				$result = MZK_Class_Types::save(
+					array(
+						'id'                      => (int) ( $post['id'] ?? 0 ),
+						'name'                    => $post['name'] ?? '',
+						'slug'                    => $post['slug'] ?? '',
+						'colour'                  => $post['colour'] ?? '',
+						'default_capacity'        => (int) ( $post['default_capacity'] ?? 6 ),
+						'default_duration'        => (int) ( $post['default_duration'] ?? 120 ),
+						'course_based'            => ! empty( $post['course_based'] ),
+						'requires_enrollment'     => ! empty( $post['requires_enrollment'] ),
+						'reschedule_enabled'      => ! empty( $post['reschedule_enabled'] ),
+						'reschedule_cutoff_hours' => (int) ( $post['reschedule_cutoff_hours'] ?? 72 ),
+						'cancel_enabled'          => ! empty( $post['cancel_enabled'] ),
+						'cancel_cutoff_hours'     => (int) ( $post['cancel_cutoff_hours'] ?? 72 ),
+						'max_reschedules'         => (int) ( $post['max_reschedules'] ?? 0 ),
+						'description'             => $post['description'] ?? '',
+						'sort_order'              => (int) ( $post['sort_order'] ?? 0 ),
+						'active'                  => ! empty( $post['active'] ),
+					)
+				);
+				self::report( $result, __( 'Class saved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-classes' );
+				break;
+
+			case 'delete_class':
+				$result = MZK_Class_Types::delete( (int) ( $post['id'] ?? 0 ) );
+				self::report( $result, __( 'Class deleted.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-classes' );
+				break;
+
+			/* ---- settings ---- */
+
+			case 'save_settings':
+				$settings = MZK_Install::get_settings();
+				$fields   = array(
+					'studio_name'      => 'text',
+					'admin_email'      => 'email',
+					'confirm_subject'  => 'text',
+					'reminder_subject' => 'text',
+					'reschedule_subject' => 'text',
+					'cancel_subject'   => 'text',
+					'confirm_body'     => 'textarea',
+					'reminder_body'    => 'textarea',
+					'reschedule_body'  => 'textarea',
+					'cancel_body'      => 'textarea',
+				);
+				foreach ( $fields as $key => $type ) {
+					if ( ! isset( $post[ $key ] ) ) {
+						continue;
+					}
+					$settings[ $key ] = 'textarea' === $type
+						? sanitize_textarea_field( $post[ $key ] )
+						: ( 'email' === $type ? sanitize_email( $post[ $key ] ) : sanitize_text_field( $post[ $key ] ) );
+				}
+				$settings['months_ahead']         = max( 2, (int) ( $post['months_ahead'] ?? 3 ) );
+				$settings['reminder_days_before'] = max( 0, (int) ( $post['reminder_days_before'] ?? 2 ) );
+				$settings['reminder_hour']        = max( 0, min( 23, (int) ( $post['reminder_hour'] ?? 9 ) ) );
+				$settings['notify_admin']         = empty( $post['notify_admin'] ) ? 0 : 1;
+				$settings['require_phone']        = empty( $post['require_phone'] ) ? 0 : 1;
+				// The payment fields only render when WooCommerce is active, so leave
+				// them untouched otherwise rather than resetting them to defaults.
+				if ( class_exists( 'WooCommerce' ) ) {
+					$settings['woo_enabled']          = empty( $post['woo_enabled'] ) ? 0 : 1;
+					$settings['woo_hold_minutes']     = max( 5, min( 1440, (int) ( $post['woo_hold_minutes'] ?? 45 ) ) );
+					$settings['woo_confirm_on']       = in_array( $post['woo_confirm_on'] ?? 'processing', array( 'processing', 'completed' ), true )
+						? $post['woo_confirm_on']
+						: 'processing';
+					$settings['woo_package_validity'] = max( 0, min( 60, (int) ( $post['woo_package_validity'] ?? 12 ) ) );
+				}
+				$settings['booking_page_id']      = (int) ( $post['booking_page_id'] ?? 0 );
+				$settings['manage_page_id']       = (int) ( $post['manage_page_id'] ?? 0 );
+
+				update_option( MZK_Install::OPTION_SETTINGS, $settings );
+				self::add_notice( 'success', __( 'Settings saved.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-settings' );
+				break;
+
+			case 'send_test_email':
+				$sent = MZK_Mailer::send_test(
+					sanitize_key( $post['template'] ?? 'confirm' ),
+					sanitize_email( $post['to'] ?? '' )
+				);
+				self::add_notice(
+					$sent ? 'success' : 'error',
+					$sent ? __( 'Test e-mail sent.', 'mizuki-booking' ) : __( 'The test e-mail could not be sent. Check the address and your site mail setup.', 'mizuki-booking' )
+				);
+				self::redirect( 'mzk-settings' );
+				break;
+
+			case 'run_reminders':
+				$sent = MZK_Cron::run_reminders( true );
+				self::add_notice(
+					'success',
+					sprintf(
+						/* translators: %d: number of reminders. */
+						__( 'Reminder run finished: %d e-mail(s) sent.', 'mizuki-booking' ),
+						$sent
+					)
+				);
+				self::redirect( 'mzk-settings' );
+				break;
+
+			default:
+				self::add_notice( 'error', __( 'Unknown action.', 'mizuki-booking' ) );
+				self::redirect( self::SLUG );
+		}
+	}
+
+	/**
+	 * Keep list filters across a row action redirect.
+	 *
+	 * @param array $post Request data.
+	 * @return array
+	 */
+	private static function preserve_filters( $post ) {
+		$keep = array();
+		foreach ( array( 'status', 'class_type', 'from', 'to', 's', 'paged' ) as $key ) {
+			if ( ! empty( $post[ 'f_' . $key ] ) ) {
+				$keep[ $key ] = sanitize_text_field( $post[ 'f_' . $key ] );
+			}
+		}
+		return $keep;
+	}
+
+	/* --------------------------------------------------------------- views */
+
+	/**
+	 * Render a view file.
+	 *
+	 * @param string $view View slug.
+	 * @param array  $vars Variables extracted into the view.
+	 */
+	private static function view( $view, $vars = array() ) {
+		MZK_Utils::require_cap();
+		$file = MZK_PATH . 'admin/views/' . $view . '.php';
+		if ( ! file_exists( $file ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.PHP.DontExtract.extract_extract
+		extract( $vars );
+		include $file;
+	}
+
+	/**
+	 * Hidden fields shared by every admin form.
+	 *
+	 * @param string $action Action slug.
+	 */
+	public static function form_fields( $action ) {
+		echo '<input type="hidden" name="action" value="mzk_action" />';
+		echo '<input type="hidden" name="mzk_do" value="' . esc_attr( $action ) . '" />';
+		wp_nonce_field( 'mzk_' . $action );
+	}
+
+	/**
+	 * URL for a one-click row action.
+	 *
+	 * @param string $action Action slug.
+	 * @param array  $args   Extra query args.
+	 * @return string
+	 */
+	public static function action_url( $action, $args = array() ) {
+		$url = add_query_arg(
+			array_merge(
+				array(
+					'action' => 'mzk_action',
+					'mzk_do' => $action,
+				),
+				$args
+			),
+			admin_url( 'admin-post.php' )
+		);
+		return wp_nonce_url( $url, 'mzk_' . $action );
+	}
+
+	public static function render_schedule() {
+		self::view( 'schedule' );
+	}
+
+	public static function render_sessions() {
+		self::view( 'sessions' );
+	}
+
+	public static function render_bookings() {
+		self::view( 'bookings' );
+	}
+
+	public static function render_enrollments() {
+		self::view( 'enrollments' );
+	}
+
+	public static function render_blackouts() {
+		self::view( 'blackouts' );
+	}
+
+	public static function render_classes() {
+		self::view( 'classes' );
+	}
+
+	public static function render_settings() {
+		self::view( 'settings' );
+	}
+}

@@ -1,0 +1,648 @@
+/**
+ * Mizuki Booking - front-end styles.
+ *
+ * Matched to the live mizuki.com.sg design system (Astra + Elementor Pro):
+ *   Colours   primary #2D5778 · action #3F827A · text #162A3C · muted #555D60
+ *             surface #F0F5FA · border #e7e7e7 · rule #bcbcbc
+ *   Type      body Poppins 300 · headings Radio Canada 700 uppercase, 2px tracking
+ *   Shape     square corners throughout, buttons 12px/24px solid teal
+ *
+ * Colours read the Elementor global variables first so the plugin follows any
+ * future palette change in the site kit, with the current values as fallbacks.
+ */
+
+.mzk-calendar,
+.mzk-manage {
+	--mzk-primary: var(--e-global-color-primary, #2d5778);
+	--mzk-accent: var(--e-global-color-secondary, #3f827a);
+	--mzk-text: var(--e-global-color-text, #162a3c);
+	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
+	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
+	--mzk-bg: #ffffff;
+	--mzk-border: #e7e7e7;
+	--mzk-rule: #bcbcbc;
+	--mzk-alert: #9d3b3b;
+
+	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
+	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
+
+	color: var(--mzk-text);
+	font-family: var(--mzk-font);
+	font-weight: 300;
+	font-size: clamp(14px, calc(14px + (18 - 14) * (100vw - 375px) / 1525), 18px);
+	line-height: 1.65;
+}
+
+.mzk-calendar *,
+.mzk-manage * {
+	box-sizing: border-box;
+}
+
+/* Defensive resets: the studio's theme styles lists, buttons and fields
+   globally, so neutralise those inside the plugin's own markup. */
+
+.mzk-calendar ul,
+.mzk-manage ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.mzk-calendar li,
+.mzk-manage li {
+	margin: 0;
+}
+
+.mzk-calendar select,
+.mzk-calendar input,
+.mzk-calendar textarea,
+.mzk-manage select,
+.mzk-manage input,
+.mzk-manage textarea {
+	max-width: 100%;
+	box-shadow: none;
+	text-transform: none;
+}
+
+/* Headings — uppercase with the short rule the site uses under section titles */
+
+.mzk-calendar h3,
+.mzk-calendar h4,
+.mzk-manage h3,
+.mzk-manage h4 {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	color: var(--mzk-text);
+	line-height: 1.35;
+}
+
+.mzk-panel__title,
+.mzk-list__date,
+.mzk-alternates h4 {
+	position: relative;
+	padding-bottom: 12px;
+}
+
+.mzk-panel__title::after,
+.mzk-list__date::after,
+.mzk-alternates h4::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 25px;
+	border-top: 1px solid var(--mzk-rule);
+}
+
+.mzk-loading {
+	padding: 32px 0;
+	color: var(--mzk-muted);
+	text-align: center;
+	letter-spacing: 0.02em;
+}
+
+/* Filter ------------------------------------------------------------------ */
+
+.mzk-filter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 24px;
+	flex-wrap: wrap;
+}
+
+.mzk-filter__label {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-size: 0.8em;
+}
+
+.mzk-filter__select {
+	padding: 10px 14px;
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	background: var(--mzk-bg);
+	color: inherit;
+	font-family: var(--mzk-font);
+	font-size: 0.9em;
+	min-height: 44px;
+}
+
+/* Layout ------------------------------------------------------------------ */
+
+.mzk-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
+	gap: 32px;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.mzk-layout {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+}
+
+.mzk-months {
+	display: grid;
+	gap: 32px;
+	max-height: 760px;
+	overflow-y: auto;
+	padding-right: 6px;
+}
+
+@media (max-width: 900px) {
+	.mzk-months {
+		max-height: none;
+		overflow: visible;
+		padding-right: 0;
+	}
+}
+
+.mzk-month__head {
+	position: sticky;
+	top: 0;
+	background: var(--mzk-bg);
+	padding: 2px 0 10px;
+	z-index: 1;
+}
+
+.mzk-month__title {
+	margin: 0;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-size: 0.95em;
+	color: var(--mzk-text);
+}
+
+/* Grid -------------------------------------------------------------------- */
+
+.mzk-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 1px;
+	background: var(--mzk-border);
+	border: 1px solid var(--mzk-border);
+}
+
+.mzk-grid__dow {
+	text-align: center;
+	font-family: var(--mzk-font-head);
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: var(--mzk-muted);
+	background: var(--mzk-surface);
+	padding: 8px 0;
+}
+
+.mzk-day {
+	position: relative;
+	aspect-ratio: 1 / 1;
+	min-height: 44px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	background: var(--mzk-bg);
+	border-radius: 0;
+	cursor: pointer;
+	transition: background 0.18s ease, color 0.18s ease;
+}
+
+.mzk-day--empty {
+	background: var(--mzk-bg);
+	cursor: default;
+}
+
+.mzk-day--disabled {
+	color: #b6bdc4;
+	cursor: default;
+}
+
+.mzk-day--blackout {
+	background: repeating-linear-gradient(
+		135deg,
+		var(--mzk-bg),
+		var(--mzk-bg) 5px,
+		var(--mzk-surface) 5px,
+		var(--mzk-surface) 10px
+	);
+	color: #a8b1b9;
+}
+
+.mzk-day--open,
+.mzk-day--full {
+	font-weight: 400;
+}
+
+.mzk-day--open:hover,
+.mzk-day--full:hover {
+	background: var(--mzk-surface);
+}
+
+.mzk-day--full {
+	color: var(--mzk-muted);
+}
+
+.mzk-day.is-selected {
+	background: var(--mzk-accent);
+	color: #fff;
+}
+
+.mzk-day.is-selected .mzk-dot {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.mzk-day:focus-visible {
+	outline: 2px solid var(--mzk-primary);
+	outline-offset: -2px;
+}
+
+.mzk-day__num {
+	font-size: 0.85em;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.mzk-day__dots {
+	display: flex;
+	gap: 3px;
+}
+
+.mzk-dot {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	display: block;
+}
+
+/* Panel ------------------------------------------------------------------- */
+
+.mzk-panel {
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 24px;
+}
+
+.mzk-panel__title {
+	margin: 0 0 18px;
+	font-size: 0.9em;
+}
+
+.mzk-sessions {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 12px;
+}
+
+.mzk-session {
+	position: relative;
+	border: 1px solid var(--mzk-border);
+	/* --mzk-class is set per card from the class colour; it never reaches the
+	   buttons, which stay brand teal. */
+	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
+	border-radius: 0;
+	background: var(--mzk-bg);
+	padding: 16px 18px;
+}
+
+.mzk-session--full {
+	color: var(--mzk-muted);
+}
+
+.mzk-session--booked {
+	border-left-color: var(--mzk-primary);
+}
+
+.mzk-session__head {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: baseline;
+	margin-bottom: 6px;
+}
+
+.mzk-session__class {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.82em;
+	color: var(--mzk-text);
+}
+
+.mzk-session__time {
+	font-variant-numeric: tabular-nums;
+	font-size: 0.9em;
+}
+
+.mzk-session__meta {
+	display: flex;
+	gap: 16px;
+	font-size: 0.78em;
+	color: var(--mzk-muted);
+	margin-bottom: 14px;
+	flex-wrap: wrap;
+	letter-spacing: 0.02em;
+}
+
+.mzk-session__seats.is-full {
+	color: var(--mzk-alert);
+}
+
+/* Buttons — square, solid teal, matching the site's Elementor button style.
+   Selectors are scoped to the plugin root so Astra/ElementsKit button rules
+   cannot override them.
+   The `!important` flags on background/border are deliberate and minimal: the
+   Astra customizer ships
+     .menu-toggle, button, .ast-button, ... { background-color: #3F827A !important;
+                                              border-color: #3F827A !important }
+   which would otherwise paint the secondary buttons solid teal with navy text. */
+
+.mzk-calendar .mzk-btn,
+.mzk-manage .mzk-btn {
+	display: inline-block;
+	-webkit-appearance: none;
+	appearance: none;
+	padding: 12px 24px;
+	border-radius: 0;
+	border: 1px solid transparent;
+	box-shadow: none;
+	font-family: var(--mzk-font);
+	font-size: 0.8em;
+	font-weight: 300;
+	line-height: 1.4;
+	letter-spacing: normal;
+	text-transform: none;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+/* The site uses three button tiers: page CTA (18/40, 700, uppercase, 2px),
+   WooCommerce add-to-cart (10/20, 500) and utility (12/24, 300). Primary
+   actions follow the page-CTA tier at a padding that fits inside a session
+   card; secondary actions stay on the quieter utility tier. */
+
+.mzk-calendar .mzk-btn--primary,
+.mzk-manage .mzk-btn--primary {
+	background-color: var(--mzk-accent) !important;
+	border-color: var(--mzk-accent) !important;
+	color: #fff;
+	padding: 14px 28px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-size: 0.72em;
+}
+
+.mzk-calendar .mzk-btn--primary:hover,
+.mzk-calendar .mzk-btn--primary:focus,
+.mzk-manage .mzk-btn--primary:hover,
+.mzk-manage .mzk-btn--primary:focus {
+	background-color: var(--mzk-primary) !important;
+	border-color: var(--mzk-primary) !important;
+	color: #fff;
+}
+
+.mzk-calendar .mzk-btn--primary[disabled],
+.mzk-manage .mzk-btn--primary[disabled] {
+	opacity: 0.55;
+	cursor: default;
+}
+
+.mzk-calendar .mzk-btn--ghost,
+.mzk-manage .mzk-btn--ghost {
+	background-color: transparent !important;
+	border-color: var(--mzk-primary) !important;
+	color: var(--mzk-primary);
+}
+
+.mzk-calendar .mzk-btn--ghost:hover,
+.mzk-calendar .mzk-btn--ghost:focus,
+.mzk-manage .mzk-btn--ghost:hover,
+.mzk-manage .mzk-btn--ghost:focus {
+	background-color: var(--mzk-primary) !important;
+	border-color: var(--mzk-primary) !important;
+	color: #fff;
+}
+
+/* Form — underline fields, as used by the studio's enquiry form ------------ */
+
+.mzk-form {
+	margin-top: 18px;
+	display: grid;
+	gap: 16px;
+}
+
+.mzk-field {
+	display: grid;
+	gap: 2px;
+}
+
+.mzk-field__label {
+	font-size: 0.75em;
+	letter-spacing: 0.04em;
+	color: var(--mzk-muted);
+	text-transform: uppercase;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+}
+
+.mzk-input {
+	width: 100%;
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid var(--mzk-border);
+	border-radius: 0;
+	background: transparent;
+	color: var(--mzk-text);
+	font-family: var(--mzk-font);
+	font-size: 0.9em;
+	font-weight: 300;
+	min-height: 40px;
+}
+
+.mzk-input:focus {
+	outline: none;
+	border-bottom-color: var(--mzk-accent);
+	box-shadow: 0 1px 0 0 var(--mzk-accent);
+}
+
+textarea.mzk-input {
+	min-height: 72px;
+	resize: vertical;
+	padding-top: 10px;
+}
+
+.mzk-honey {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+}
+
+.mzk-form__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-top: 4px;
+}
+
+/* Notices ----------------------------------------------------------------- */
+
+.mzk-notice {
+	padding: 12px 14px;
+	border-radius: 0;
+	font-size: 0.82em;
+	margin: 12px 0 0;
+	border-left: 3px solid transparent;
+}
+
+.mzk-notice--error {
+	background: #fbf1f1;
+	border-left-color: var(--mzk-alert);
+	color: var(--mzk-alert);
+}
+
+.mzk-notice--info {
+	background: var(--mzk-surface);
+	border-left-color: var(--mzk-rule);
+	color: var(--mzk-muted);
+}
+
+.mzk-success h4 {
+	margin: 0 0 8px;
+	font-size: 0.85em;
+	color: var(--mzk-accent);
+}
+
+.mzk-success p {
+	margin: 0 0 14px;
+	font-size: 0.9em;
+}
+
+/* Manager ----------------------------------------------------------------- */
+
+.mzk-booking {
+	border: 1px solid var(--mzk-border);
+	border-top: 3px solid var(--mzk-accent);
+	border-radius: 0;
+	padding: 24px;
+	margin-bottom: 20px;
+	background: var(--mzk-bg);
+}
+
+.mzk-booking--cancelled {
+	border-top-color: var(--mzk-rule);
+	color: var(--mzk-muted);
+}
+
+.mzk-booking__title {
+	margin: 0 0 10px;
+	font-size: 0.95em;
+}
+
+.mzk-booking__meta {
+	display: flex;
+	gap: 18px;
+	flex-wrap: wrap;
+	align-items: center;
+	color: var(--mzk-muted);
+	font-size: 0.85em;
+	margin-bottom: 18px;
+}
+
+.mzk-badge {
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 2px 12px;
+	font-family: var(--mzk-font-head);
+	font-size: 0.75em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: var(--mzk-text);
+}
+
+.mzk-booking__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-alternates {
+	margin-top: 22px;
+	border-top: 1px solid var(--mzk-border);
+	padding-top: 20px;
+}
+
+.mzk-alternates h4 {
+	margin: 0 0 16px;
+	font-size: 0.82em;
+}
+
+/* Course package progress ------------------------------------------------- */
+
+.mzk-progress {
+	height: 6px;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	margin: 0 0 18px;
+	max-width: 260px;
+}
+
+.mzk-progress span {
+	display: block;
+	height: 100%;
+	background: var(--mzk-accent);
+}
+
+/* Product page session picker --------------------------------------------- */
+
+.mzk-product-picker {
+	margin: 0 0 20px;
+}
+
+.mzk-product-picker .mzk-input {
+	border: 1px solid var(--mzk-border);
+	padding: 10px 12px;
+	background: var(--mzk-bg);
+}
+
+.mzk-product-picker .mzk-note {
+	margin: 8px 0 0;
+	font-size: 0.78em;
+}
+
+/* List view --------------------------------------------------------------- */
+
+.mzk-list__day {
+	margin-bottom: 32px;
+}
+
+.mzk-list__date {
+	margin: 0 0 16px;
+	font-size: 0.9em;
+}
+
+.mzk-note {
+	color: var(--mzk-muted);
+	font-size: 0.85em;
+}

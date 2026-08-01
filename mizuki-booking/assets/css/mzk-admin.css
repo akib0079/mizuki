@@ -1,0 +1,278 @@
+/**
+ * Mizuki Booking - admin styles.
+ */
+
+.mzk-wrap .description {
+	max-width: 70ch;
+}
+
+.mzk-muted {
+	color: #777;
+}
+
+.mzk-danger {
+	color: #b32d2e;
+}
+
+.mzk-tag {
+	display: inline-block;
+	background: #f0f0f1;
+	border-radius: 3px;
+	padding: 0 6px;
+	font-size: 11px;
+	line-height: 18px;
+	white-space: nowrap;
+}
+
+.mzk-tag--warn {
+	background: #fcf0d8;
+	color: #8a6116;
+}
+
+.mzk-swatch {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+/* Stats ------------------------------------------------------------------- */
+
+.mzk-stats {
+	display: flex;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin: 16px 0;
+}
+
+.mzk-stat {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 14px 18px;
+	min-width: 200px;
+}
+
+.mzk-stat__num {
+	display: block;
+	font-size: 26px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.mzk-stat__label {
+	display: block;
+	color: #646970;
+	font-size: 12px;
+	margin-top: 4px;
+}
+
+/* Toolbar ----------------------------------------------------------------- */
+
+.mzk-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin: 14px 0;
+}
+
+.mzk-toolbar__month {
+	font-size: 15px;
+	min-width: 150px;
+	text-align: center;
+}
+
+/* Calendar ---------------------------------------------------------------- */
+
+.mzk-cal {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 4px;
+	background: #f0f0f1;
+	padding: 4px;
+	border-radius: 6px;
+}
+
+.mzk-cal__dow {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #646970;
+	text-align: center;
+	padding: 4px 0;
+}
+
+.mzk-cal__cell {
+	background: #fff;
+	border-radius: 4px;
+	min-height: 118px;
+	padding: 6px;
+	font-size: 12px;
+}
+
+.mzk-cal__cell--empty {
+	background: transparent;
+}
+
+.mzk-cal__cell.is-today {
+	outline: 2px solid #2271b1;
+}
+
+.mzk-cal__cell.is-blocked {
+	background: repeating-linear-gradient(135deg, #fff, #fff 5px, #f6f2ec 5px, #f6f2ec 10px);
+}
+
+.mzk-cal__date {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.mzk-cal__add {
+	text-decoration: none;
+	font-size: 14px;
+	line-height: 1;
+	opacity: 0.4;
+}
+
+.mzk-cal__cell:hover .mzk-cal__add {
+	opacity: 1;
+}
+
+.mzk-cal__blocked {
+	background: #fcf0d8;
+	color: #8a6116;
+	border-radius: 3px;
+	padding: 2px 5px;
+	margin-bottom: 4px;
+	font-size: 11px;
+}
+
+.mzk-slot {
+	border-left: 3px solid var(--mzk-accent, #c98a9a);
+	background: #fafafa;
+	border-radius: 3px;
+	padding: 4px 6px;
+	margin-bottom: 4px;
+}
+
+.mzk-slot--closed,
+.mzk-slot--cancelled {
+	opacity: 0.55;
+}
+
+.mzk-slot__top {
+	display: flex;
+	gap: 5px;
+	align-items: baseline;
+	flex-wrap: wrap;
+}
+
+.mzk-slot__class {
+	color: #50575e;
+}
+
+.mzk-slot__meta {
+	display: flex;
+	gap: 8px;
+	color: #646970;
+	font-size: 11px;
+	margin: 2px 0;
+	flex-wrap: wrap;
+}
+
+.mzk-slot__actions {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
+.mzk-mini {
+	display: inline-block;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 0 5px;
+	font-size: 11px;
+	line-height: 18px;
+	text-decoration: none;
+	background: #fff;
+}
+
+.mzk-mini:hover {
+	border-color: #2271b1;
+}
+
+/* Cards and columns ------------------------------------------------------- */
+
+.mzk-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 6px 20px 20px;
+	margin: 20px 0;
+}
+
+.mzk-columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+	gap: 20px;
+	align-items: start;
+}
+
+.mzk-table td {
+	vertical-align: top;
+}
+
+.mzk-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.mzk-inline {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.mzk-inline select {
+	max-width: 240px;
+}
+
+.mzk-bar {
+	background: #f0f0f1;
+	border-radius: 3px;
+	height: 6px;
+	overflow: hidden;
+	margin: 4px 0;
+	max-width: 140px;
+}
+
+.mzk-bar span {
+	display: block;
+	height: 100%;
+	background: #2271b1;
+}
+
+.mzk-list-plain {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mzk-list-plain li {
+	padding: 3px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.mzk-pager {
+	display: flex;
+	gap: 8px;
+}

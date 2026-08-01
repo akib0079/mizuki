@@ -1,0 +1,16 @@
+# Build artefacts — attach the zip to a GitHub release instead of committing it
+*.zip
+
+# macOS
+.DS_Store
+._*
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Local tooling
+.claude/
+node_modules/
+vendor/
