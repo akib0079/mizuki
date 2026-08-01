@@ -343,12 +343,20 @@
 		item.appendChild( meta );
 
 		if ( session.bookable ) {
-			var button = el( 'button', 'mzk-btn mzk-btn--primary', I18N.book );
-			button.type = 'button';
-			button.addEventListener( 'click', function () {
-				self.openForm( item, session, button );
-			} );
-			item.appendChild( button );
+			// Paid classes and course places are arranged elsewhere — send the
+			// student straight there rather than to a form that would be refused.
+			if ( session.enrolUrl ) {
+				var link = el( 'a', 'mzk-btn mzk-btn--primary', session.enrolLabel || I18N.book );
+				link.href = session.enrolUrl;
+				item.appendChild( link );
+			} else {
+				var button = el( 'button', 'mzk-btn mzk-btn--primary', I18N.book );
+				button.type = 'button';
+				button.addEventListener( 'click', function () {
+					self.openForm( item, session, button );
+				} );
+				item.appendChild( button );
+			}
 		}
 
 		return item;
@@ -447,7 +455,21 @@
 				.catch( function ( error ) {
 					submit.disabled = false;
 					submit.textContent = I18N.confirm;
-					form.appendChild( notice( 'error', error.message || I18N.error ) );
+
+					var box = notice( 'error', error.message || I18N.error );
+
+					// When the refusal came with somewhere to go — buy the course,
+					// pay for the class — offer it as a button rather than a dead end.
+					var data = error.data || {};
+					if ( data.enrolUrl ) {
+						var go = el( 'a', 'mzk-btn mzk-btn--primary', data.enrolLabel || I18N.book );
+						go.href = data.enrolUrl;
+						go.style.marginTop = '10px';
+						box.appendChild( document.createElement( 'br' ) );
+						box.appendChild( go );
+					}
+
+					form.appendChild( box );
 				} );
 		} );
 

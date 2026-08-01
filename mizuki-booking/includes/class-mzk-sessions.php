@@ -75,6 +75,7 @@ class MZK_Sessions {
 
 		$sql = "SELECT s.*,
 					ct.name AS class_name, ct.slug AS class_slug, ct.colour AS class_colour,
+					ct.payment_mode, ct.product_id, ct.booking_url,
 					ct.course_based, ct.requires_enrollment, ct.reschedule_enabled,
 					ct.reschedule_cutoff_hours, ct.cancel_enabled, ct.cancel_cutoff_hours,
 					COALESCE(bk.seats_taken, 0) AS seats_taken
@@ -153,6 +154,21 @@ class MZK_Sessions {
 			&& ! $row->is_past
 			&& ! $row->is_full
 			&& ! $row->is_blacked_out;
+
+		// How a student gets this place: book it here, buy it in the shop, or use
+		// a course package. The calendar shows the right control for each.
+		$type               = (object) array(
+			'payment_mode'        => $row->payment_mode ?? '',
+			'requires_enrollment' => $row->requires_enrollment ?? 0,
+			'product_id'          => $row->product_id ?? 0,
+			'booking_url'         => $row->booking_url ?? '',
+			'slug'                => $row->class_slug ?? '',
+		);
+		$row->payment_mode  = MZK_Class_Types::payment_mode( $type );
+		$row->enrol_url     = 'free' === $row->payment_mode ? '' : MZK_Class_Types::purchase_url( $type );
+		$row->enrol_label   = 'package' === $row->payment_mode
+			? __( 'About this course', 'mizuki-booking' )
+			: __( 'Book and pay', 'mizuki-booking' );
 
 		/**
 		 * Filter a decorated session row before it reaches the calendar.

@@ -231,6 +231,9 @@ class MZK_Rest {
 			'isFull'     => (bool) $session->is_full,
 			'bookable'   => (bool) $session->is_bookable,
 			'courseBased' => (bool) $session->course_based,
+			'paymentMode' => $session->payment_mode,
+			'enrolUrl'    => $session->enrol_url,
+			'enrolLabel'  => $session->enrol_label,
 		);
 	}
 
@@ -260,7 +263,9 @@ class MZK_Rest {
 		);
 
 		if ( is_wp_error( $id ) ) {
-			$id->add_data( array( 'status' => 400 ) );
+			// Keep any "here is where to go instead" link the gate supplied.
+			$extra = (array) $id->get_error_data();
+			$id->add_data( array_merge( $extra, array( 'status' => 400 ) ) );
 			return $id;
 		}
 

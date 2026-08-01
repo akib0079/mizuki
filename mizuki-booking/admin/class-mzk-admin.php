@@ -50,9 +50,18 @@ class MZK_Admin {
 	public static function menu() {
 		$cap = MZK_Utils::cap();
 
+		// A count bubble on the menu, so registrations waiting for approval are
+		// impossible to miss from anywhere in wp-admin.
+		$waiting = count( MZK_Students::pending( 50 ) );
+		$label   = __( 'Bookings', 'mizuki-booking' );
+		if ( $waiting ) {
+			$label .= ' <span class="update-plugins count-' . (int) $waiting . '"><span class="update-count">'
+				. number_format_i18n( $waiting ) . '</span></span>';
+		}
+
 		add_menu_page(
 			__( 'Mizuki Booking', 'mizuki-booking' ),
-			__( 'Bookings', 'mizuki-booking' ),
+			$label,
 			$cap,
 			self::SLUG,
 			array( __CLASS__, 'render_schedule' ),
@@ -356,6 +365,27 @@ class MZK_Admin {
 				self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
 				break;
 
+			case 'create_products':
+				$made = MZK_Setup::create_products();
+				if ( $made['created'] ) {
+					self::add_notice(
+						'success',
+						sprintf(
+							/* translators: 1: number created, 2: class names. */
+							__( '%1$d draft product(s) created and linked: %2$s. Set a price on each, then publish it.', 'mizuki-booking' ),
+							$made['created'],
+							implode( ', ', $made['names'] )
+						)
+					);
+				} else {
+					self::add_notice(
+						'info',
+						__( 'Nothing to create — every paid class and course already has a product.', 'mizuki-booking' )
+					);
+				}
+				self::redirect( 'mzk-setup' );
+				break;
+
 			case 'repair_tables':
 				$result = MZK_Setup::repair_tables();
 				if ( $result['ok'] ) {
@@ -590,8 +620,6 @@ class MZK_Admin {
 						'colour'                  => $post['colour'] ?? '',
 						'default_capacity'        => (int) ( $post['default_capacity'] ?? 6 ),
 						'default_duration'        => (int) ( $post['default_duration'] ?? 120 ),
-						'course_based'            => ! empty( $post['course_based'] ),
-						'requires_enrollment'     => ! empty( $post['requires_enrollment'] ),
 						'reschedule_enabled'      => ! empty( $post['reschedule_enabled'] ),
 						'reschedule_cutoff_hours' => (int) ( $post['reschedule_cutoff_hours'] ?? 72 ),
 						'cancel_enabled'          => ! empty( $post['cancel_enabled'] ),
@@ -603,6 +631,16 @@ class MZK_Admin {
 						'price_note'              => $post['price_note'] ?? '',
 						'image_id'                => (int) ( $post['image_id'] ?? 0 ),
 						'booking_url'             => $post['booking_url'] ?? '',
+						'payment_mode'            => sanitize_key( $post['payment_mode'] ?? 'free' ),
+						'product_id'              => (int) ( $post['product_id'] ?? 0 ),
+						// "Course" implies a package is required; keep the two in step
+						// so the booking gate and the UI can never disagree.
+						'requires_enrollment'     => 'package' === ( $post['payment_mode'] ?? '' )
+							? true
+							: ! empty( $post['requires_enrollment'] ),
+						'course_based'            => 'package' === ( $post['payment_mode'] ?? '' )
+							? true
+							: ! empty( $post['course_based'] ),
 						'sort_order'              => (int) ( $post['sort_order'] ?? 0 ),
 						'active'                  => ! empty( $post['active'] ),
 					)

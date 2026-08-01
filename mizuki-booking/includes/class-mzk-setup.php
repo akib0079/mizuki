@@ -239,6 +239,22 @@ class MZK_Setup {
 			$todo[] = __( 'No bookable sessions in the next 2 months — generate the schedule.', 'mizuki-booking' );
 		}
 
+		foreach ( self::payment_status() as $row ) {
+			if ( $row['needs'] && ! $row['product'] ) {
+				$todo[] = sprintf(
+					/* translators: %s: class name. */
+					__( '%s is set to be paid for online, but has no shop product — students cannot pay yet.', 'mizuki-booking' ),
+					$row['name']
+				);
+			} elseif ( $row['needs'] && $row['product'] && 'publish' !== $row['product']['status'] ) {
+				$todo[] = sprintf(
+					/* translators: %s: class name. */
+					__( 'The product for %s is still a draft — set its price and publish it.', 'mizuki-booking' ),
+					$row['name']
+				);
+			}
+		}
+
 		if ( 'Asia/Singapore' !== wp_timezone_string() && '+08:00' !== wp_timezone_string() ) {
 			$todo[] = sprintf(
 				/* translators: %s: current timezone. */
@@ -333,6 +349,141 @@ class MZK_Setup {
 			'missing' => $after['missing'],
 			'ok'      => empty( $after['missing'] ),
 		);
+	}
+
+	/**
+	 * How each class is paid for right now, for the Setup screen.
+	 *
+	 * @return array
+	 */
+	public static function payment_status() {
+		$out = array();
+
+		foreach ( MZK_Class_Types::all( true ) as $type ) {
+			$mode    = MZK_Class_Types::payment_mode( $type );
+			$product = null;
+
+			if ( $type->product_id && function_exists( 'wc_get_product' ) ) {
+				$product = wc_get_product( (int) $type->product_id );
+			}
+
+			$out[] = array(
+				'id'      => (int) $type->id,
+				'name'    => $type->name,
+				'slug'    => $type->slug,
+				'colour'  => $type->colour,
+				'mode'    => $mode,
+				'needs'   => in_array( $mode, array( 'paid', 'package' ), true ),
+				'product' => $product ? array(
+					'id'     => $product->get_id(),
+					'name'   => $product->get_name(),
+					'price'  => $product->get_price_html(),
+					'status' => $product->get_status(),
+					'edit'   => get_edit_post_link( $product->get_id(), 'raw' ),
+				) : null,
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Create a draft WooCommerce product for every paid class or course that does
+	 * not have one yet, wired up to the calendar. The studio just sets the price
+	 * and publishes.
+	 *
+	 * @return array{created:int,skipped:int,names:array}
+	 */
+	public static function create_products() {
+		$result = array(
+			'created' => 0,
+			'skipped' => 0,
+			'names'   => array(),
+		);
+
+		if ( ! class_exists( 'WC_Product_Simple' ) ) {
+			return $result;
+		}
+
+		foreach ( MZK_Class_Types::all( true ) as $type ) {
+			$mode = MZK_Class_Types::payment_mode( $type );
+
+			if ( 'free' === $mode ) {
+				continue;
+			}
+
+			// Already linked to a product that still exists.
+			if ( $type->product_id && wc_get_product( (int) $type->product_id ) ) {
+				++$result['skipped'];
+				continue;
+			}
+
+			$product = new WC_Product_Simple();
+			$product->set_name(
+				'package' === $mode
+					/* translators: %s: class name. */
+					? sprintf( __( '%s — Course', 'mizuki-booking' ), $type->name )
+					: $type->name
+			);
+			$product->set_status( 'draft' );
+			$product->set_catalog_visibility( 'visible' );
+			$product->set_virtual( true );
+			$product->set_sold_individually( 'package' === $mode );
+			$product->set_description( $type->description ? $type->description : $type->summary );
+			$product->set_short_description( $type->summary );
+			$product->set_regular_price( '' );
+
+			if ( $type->image_id ) {
+				$product->set_image_id( (int) $type->image_id );
+			}
+
+			$product_id = $product->save();
+			if ( ! $product_id ) {
+				continue;
+			}
+
+			// Wire it to the booking system.
+			update_post_meta( $product_id, MZK_Woo::META_MODE, 'package' === $mode ? 'package' : 'session' );
+			update_post_meta( $product_id, MZK_Woo::META_CLASS, (int) $type->id );
+
+			if ( 'package' === $mode ) {
+				update_post_meta( $product_id, MZK_Woo::META_SESSIONS, 25 );
+				update_post_meta( $product_id, MZK_Woo::META_VALIDITY, '' );
+			}
+
+			MZK_Class_Types::save(
+				array(
+					'id'                      => (int) $type->id,
+					'name'                    => $type->name,
+					'slug'                    => $type->slug,
+					'colour'                  => $type->colour,
+					'default_capacity'        => $type->default_capacity,
+					'default_duration'        => $type->default_duration,
+					'course_based'            => $type->course_based,
+					'requires_enrollment'     => $type->requires_enrollment,
+					'reschedule_enabled'      => $type->reschedule_enabled,
+					'reschedule_cutoff_hours' => $type->reschedule_cutoff_hours,
+					'cancel_enabled'          => $type->cancel_enabled,
+					'cancel_cutoff_hours'     => $type->cancel_cutoff_hours,
+					'max_reschedules'         => $type->max_reschedules,
+					'requires_approval'       => $type->requires_approval,
+					'description'             => $type->description,
+					'summary'                 => $type->summary,
+					'price_note'              => $type->price_note,
+					'image_id'                => $type->image_id,
+					'booking_url'             => $type->booking_url,
+					'payment_mode'            => $mode,
+					'product_id'              => (int) $product_id,
+					'sort_order'              => $type->sort_order,
+					'active'                  => $type->active,
+				)
+			);
+
+			++$result['created'];
+			$result['names'][] = $type->name;
+		}
+
+		return $result;
 	}
 
 	/* --------------------------------------------------------- demo data */

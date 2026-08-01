@@ -62,6 +62,97 @@ $open_ahead  = MZK_Sessions::query(
 	</a>
 	<hr class="wp-header-end" />
 
+	<?php
+	$pending_requests = MZK_Students::pending( 25 );
+	$approval_classes = array_filter(
+		MZK_Class_Types::all( true ),
+		static function ( $type ) {
+			return ! empty( $type->requires_approval );
+		}
+	);
+	?>
+
+	<div class="mzk-card mzk-approvals">
+		<h2>
+			<?php esc_html_e( 'Booking requests', 'mizuki-booking' ); ?>
+			<?php if ( $pending_requests ) : ?>
+				<span class="mzk-tag mzk-tag--warn"><?php echo esc_html( count( $pending_requests ) ); ?></span>
+			<?php endif; ?>
+		</h2>
+
+		<?php if ( $pending_requests ) : ?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Student', 'mizuki-booking' ); ?></th>
+						<th><?php esc_html_e( 'Class', 'mizuki-booking' ); ?></th>
+						<th><?php esc_html_e( 'When', 'mizuki-booking' ); ?></th>
+						<th><?php esc_html_e( 'Contact', 'mizuki-booking' ); ?></th>
+						<th><?php esc_html_e( 'Decision', 'mizuki-booking' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ( $pending_requests as $request ) : ?>
+					<tr>
+						<td><strong><?php echo esc_html( $request->student_name ); ?></strong></td>
+						<td>
+							<span class="mzk-swatch" style="background: <?php echo esc_attr( $request->class_colour ); ?>"></span>
+							<?php echo esc_html( $request->class_name ); ?>
+						</td>
+						<td><?php echo esc_html( $request->date_label . ' · ' . $request->time_label ); ?></td>
+						<td>
+							<a href="mailto:<?php echo esc_attr( $request->email ); ?>"><?php echo esc_html( $request->email ); ?></a>
+							<?php if ( $request->phone ) : ?><br /><?php echo esc_html( $request->phone ); ?><?php endif; ?>
+						</td>
+						<td class="mzk-actions">
+							<a class="button button-primary button-small"
+								href="<?php echo esc_url( MZK_Admin::action_url( 'approve_booking', array( 'id' => $request->id ) ) ); ?>">
+								<?php esc_html_e( 'Approve', 'mizuki-booking' ); ?>
+							</a>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mzk-inline">
+								<?php MZK_Admin::form_fields( 'decline_booking' ); ?>
+								<input type="hidden" name="id" value="<?php echo esc_attr( $request->id ); ?>" />
+								<input type="text" name="reason" class="small-text"
+									placeholder="<?php esc_attr_e( 'reason (optional)', 'mizuki-booking' ); ?>" />
+								<button type="submit" class="button button-small"><?php esc_html_e( 'Decline', 'mizuki-booking' ); ?></button>
+							</form>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="description">
+				<?php esc_html_e( 'The place is held while a request waits, so nobody else can take it. The student is e-mailed as soon as you decide.', 'mizuki-booking' ); ?>
+			</p>
+
+		<?php elseif ( ! $approval_classes ) : ?>
+			<p>
+				<?php esc_html_e( 'Bookings are confirmed automatically at the moment — nothing needs approving.', 'mizuki-booking' ); ?>
+			</p>
+			<p class="description">
+				<?php
+				printf(
+					/* translators: %s: link to the classes screen. */
+					esc_html__( 'If you would rather check each student first, turn on “I approve each registration” for that class under %s. Requests will then appear here.', 'mizuki-booking' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=mzk-classes' ) ) . '">' . esc_html__( 'Classes & Rules', 'mizuki-booking' ) . '</a>'
+				);
+				?>
+			</p>
+		<?php else : ?>
+			<p><?php esc_html_e( 'Nothing waiting — you are all caught up.', 'mizuki-booking' ); ?></p>
+			<p class="description">
+				<?php
+				$names = wp_list_pluck( $approval_classes, 'name' );
+				printf(
+					/* translators: %s: class names. */
+					esc_html__( 'Requests are approved by you for: %s.', 'mizuki-booking' ),
+					esc_html( implode( ', ', $names ) )
+				);
+				?>
+			</p>
+		<?php endif; ?>
+	</div>
+
 	<div class="mzk-stats">
 		<div class="mzk-stat">
 			<span class="mzk-stat__num"><?php echo esc_html( count( $upcoming ) ); ?></span>

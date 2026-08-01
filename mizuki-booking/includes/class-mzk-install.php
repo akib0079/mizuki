@@ -200,6 +200,8 @@ class MZK_Install {
 			price_note varchar(120) NOT NULL DEFAULT '',
 			image_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			booking_url varchar(255) NOT NULL DEFAULT '',
+			payment_mode varchar(20) NOT NULL DEFAULT 'free',
+			product_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			description text NULL,
 			sort_order smallint(5) NOT NULL DEFAULT 0,
 			active tinyint(1) NOT NULL DEFAULT 1,

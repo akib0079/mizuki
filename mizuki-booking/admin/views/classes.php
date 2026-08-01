@@ -220,7 +220,66 @@ $types   = MZK_Class_Types::all();
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Enrol button goes to', 'mizuki-booking' ); ?></th>
+					<th scope="row"><?php esc_html_e( 'How students book', 'mizuki-booking' ); ?></th>
+					<td>
+						<?php $mode = $current ? MZK_Class_Types::payment_mode( $current ) : 'free'; ?>
+						<label style="display:block;margin-bottom:6px;">
+							<input type="radio" name="payment_mode" value="free" <?php checked( $mode, 'free' ); ?> />
+							<strong><?php esc_html_e( 'Book on the calendar — no payment online', 'mizuki-booking' ); ?></strong><br />
+							<span class="description" style="margin-left:24px;">
+								<?php esc_html_e( 'The student picks a date and books. Use this if you take payment in person or by transfer.', 'mizuki-booking' ); ?>
+							</span>
+						</label>
+						<label style="display:block;margin-bottom:6px;">
+							<input type="radio" name="payment_mode" value="paid" <?php checked( $mode, 'paid' ); ?> />
+							<strong><?php esc_html_e( 'Pay first — booked through the shop', 'mizuki-booking' ); ?></strong><br />
+							<span class="description" style="margin-left:24px;">
+								<?php esc_html_e( 'The student picks the date on the product page and pays. Their place is held while they check out and confirmed when payment goes through.', 'mizuki-booking' ); ?>
+							</span>
+						</label>
+						<label style="display:block;">
+							<input type="radio" name="payment_mode" value="package" <?php checked( $mode, 'package' ); ?> />
+							<strong><?php esc_html_e( 'Course — enrol once, then book sessions', 'mizuki-booking' ); ?></strong><br />
+							<span class="description" style="margin-left:24px;">
+								<?php esc_html_e( 'For IFDA and Preserved Flower. The student buys a set number of sessions, then books them free of charge on the dates that suit.', 'mizuki-booking' ); ?>
+							</span>
+						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Shop product', 'mizuki-booking' ); ?></th>
+					<td>
+						<?php if ( class_exists( 'WooCommerce' ) ) : ?>
+							<?php
+							$products = wc_get_products(
+								array(
+									'limit'   => 100,
+									'status'  => array( 'publish', 'draft' ),
+									'orderby' => 'title',
+									'order'   => 'ASC',
+								)
+							);
+							$selected = $current ? (int) $current->product_id : 0;
+							?>
+							<select name="product_id">
+								<option value="0"><?php esc_html_e( '— none —', 'mizuki-booking' ); ?></option>
+								<?php foreach ( $products as $product ) : ?>
+									<option value="<?php echo esc_attr( $product->get_id() ); ?>" <?php selected( $selected, $product->get_id() ); ?>>
+										<?php echo esc_html( $product->get_name() ); ?>
+										<?php echo 'publish' === $product->get_status() ? '' : ' (' . esc_html__( 'draft', 'mizuki-booking' ) . ')'; ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description">
+								<?php esc_html_e( 'The product students buy. Setup can create these for you.', 'mizuki-booking' ); ?>
+							</p>
+						<?php else : ?>
+							<p class="description"><?php esc_html_e( 'WooCommerce is not active, so online payment is unavailable.', 'mizuki-booking' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Or link to any page', 'mizuki-booking' ); ?></th>
 					<td>
 						<input type="url" name="booking_url" class="large-text"
 							value="<?php echo esc_attr( $current ? $current->booking_url : '' ); ?>"

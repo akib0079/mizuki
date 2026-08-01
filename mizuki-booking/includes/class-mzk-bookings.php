@@ -262,6 +262,24 @@ class MZK_Bookings {
 
 		$type = MZK_Class_Types::get( $session->class_type_id );
 
+		// Paid classes are bought in the shop, not booked directly here, so the
+		// seat and the payment can never disagree.
+		if ( $type && ! $admin && 'paid' === MZK_Class_Types::payment_mode( $type ) ) {
+			$where = MZK_Class_Types::purchase_url( $type );
+			return new WP_Error(
+				'mzk_purchase_required',
+				sprintf(
+					/* translators: %s: class name. */
+					__( '%s is booked through our shop so you can pay for your place. Your seat is held while you check out.', 'mizuki-booking' ),
+					$type->name
+				),
+				array(
+					'enrolUrl'   => $where,
+					'enrolLabel' => __( 'Book and pay', 'mizuki-booking' ),
+				)
+			);
+		}
+
 		// Duplicate guard: same e-mail, same session, still active.
 		$existing = self::query(
 			array(
@@ -298,12 +316,25 @@ class MZK_Bookings {
 				: MZK_Enrollments::find_usable( $email, $session->class_type_id, (int) ( $data['user_id'] ?? 0 ) );
 
 			if ( ! $enrollment && ! empty( $type->requires_enrollment ) && ! $admin ) {
+				// Never leave the student at a dead end: point them at the course.
+				$where = MZK_Class_Types::purchase_url( $type );
+
 				return new WP_Error(
 					'mzk_no_enrollment',
-					sprintf(
-						/* translators: %s: class name. */
-						__( 'We could not find an active %s course package for this e-mail address. Please contact the studio so we can set it up.', 'mizuki-booking' ),
-						$type->name
+					$where
+						? sprintf(
+							/* translators: %s: class name. */
+							__( '%s is a course — you enrol once, then book your sessions on the dates that suit you. We could not find a course under this e-mail address yet.', 'mizuki-booking' ),
+							$type->name
+						)
+						: sprintf(
+							/* translators: %s: class name. */
+							__( 'We could not find an active %s course under this e-mail address. Please contact the studio so we can set it up for you.', 'mizuki-booking' ),
+							$type->name
+						),
+					array(
+						'enrolUrl'   => $where,
+						'enrolLabel' => __( 'See the course', 'mizuki-booking' ),
 					)
 				);
 			}

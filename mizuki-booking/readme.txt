@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.1.2
+Stable tag: 3.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,13 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.2.0 =
+* Each class now says how students book it: on the calendar, pay-first through the shop, or as a course. The booking gate follows that setting.
+* A student who cannot book is always offered the way forward — a link to the course or the product — instead of a dead end telling them to contact the studio.
+* Paid classes show "Book and pay" on the calendar and go to the product, so a seat and its payment can never disagree.
+* Booking requests awaiting approval now appear on the Schedule dashboard, with a count badge on the Bookings menu.
+* New Payments step in Setup: see how every class is paid for, and create the missing WooCommerce products as drafts, already wired to the calendar.
 
 = 3.1.2 =
 * Fixed: links and buttons on the plugin pages appeared underlined in the theme's blue. Astra underlines every link inside post content and on WooCommerce pages, which outranked the button styles.

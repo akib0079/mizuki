@@ -108,7 +108,82 @@ foreach ( $pages as $page ) {
 	</div>
 
 	<div class="mzk-card">
-		<h2><?php esc_html_e( 'Step 3 — What is left to do', 'mizuki-booking' ); ?></h2>
+		<h2><?php esc_html_e( 'Step 3 — Payments', 'mizuki-booking' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Each class decides how students get a place. Set this under Classes & Rules; this is where you can see it all at once.', 'mizuki-booking' ); ?>
+		</p>
+
+		<?php $payments = MZK_Setup::payment_status(); ?>
+		<table class="widefat striped mzk-table">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Class', 'mizuki-booking' ); ?></th>
+					<th><?php esc_html_e( 'How students book', 'mizuki-booking' ); ?></th>
+					<th><?php esc_html_e( 'Shop product', 'mizuki-booking' ); ?></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ( $payments as $row ) : ?>
+				<tr>
+					<td>
+						<span class="mzk-swatch" style="background: <?php echo esc_attr( $row['colour'] ); ?>"></span>
+						<strong><?php echo esc_html( $row['name'] ); ?></strong>
+					</td>
+					<td>
+						<?php
+						if ( 'paid' === $row['mode'] ) {
+							esc_html_e( 'Pay first, through the shop', 'mizuki-booking' );
+						} elseif ( 'package' === $row['mode'] ) {
+							esc_html_e( 'Course — enrol once, then book sessions', 'mizuki-booking' );
+						} else {
+							esc_html_e( 'Book on the calendar, no payment online', 'mizuki-booking' );
+						}
+						?>
+					</td>
+					<td>
+						<?php if ( ! $row['needs'] ) : ?>
+							<span class="mzk-muted"><?php esc_html_e( 'not needed', 'mizuki-booking' ); ?></span>
+						<?php elseif ( $row['product'] ) : ?>
+							<a href="<?php echo esc_url( $row['product']['edit'] ); ?>"><?php echo esc_html( $row['product']['name'] ); ?></a>
+							<?php if ( 'publish' !== $row['product']['status'] ) : ?>
+								<span class="mzk-tag mzk-tag--warn"><?php esc_html_e( 'draft — not on sale yet', 'mizuki-booking' ); ?></span>
+							<?php else : ?>
+								<span class="mzk-muted"><?php echo wp_kses_post( $row['product']['price'] ); ?></span>
+							<?php endif; ?>
+						<?php else : ?>
+							<span class="mzk-tag mzk-tag--warn"><?php esc_html_e( 'no product — students cannot pay', 'mizuki-booking' ); ?></span>
+						<?php endif; ?>
+					</td>
+					<td>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=mzk-classes&edit=' . $row['id'] ) ); ?>">
+							<?php esc_html_e( 'Change', 'mizuki-booking' ); ?>
+						</a>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<?php if ( class_exists( 'WooCommerce' ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php MZK_Admin::form_fields( 'create_products' ); ?>
+				<p class="submit">
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Create the missing products', 'mizuki-booking' ); ?></button>
+				</p>
+				<p class="description">
+					<?php esc_html_e( 'Creates a draft product for every paid class and course that has none, already connected to the calendar. You set the price and publish — nothing goes on sale by itself.', 'mizuki-booking' ); ?>
+				</p>
+			</form>
+		<?php else : ?>
+			<div class="notice notice-warning inline">
+				<p><?php esc_html_e( 'WooCommerce is not active, so students cannot pay online. Classes can still be booked on the calendar.', 'mizuki-booking' ); ?></p>
+			</div>
+		<?php endif; ?>
+	</div>
+
+	<div class="mzk-card">
+		<h2><?php esc_html_e( 'Step 4 — What is left to do', 'mizuki-booking' ); ?></h2>
 
 		<?php if ( ! $outstanding ) : ?>
 			<p class="mzk-ready">

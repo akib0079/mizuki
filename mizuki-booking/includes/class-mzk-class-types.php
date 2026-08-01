@@ -121,6 +121,8 @@ class MZK_Class_Types {
 			'price_note'              => isset( $data['price_note'] ) ? sanitize_text_field( $data['price_note'] ) : '',
 			'image_id'                => (int) ( $data['image_id'] ?? 0 ),
 			'booking_url'             => isset( $data['booking_url'] ) ? esc_url_raw( $data['booking_url'] ) : '',
+			'payment_mode'            => in_array( $data['payment_mode'] ?? 'free', array( 'free', 'paid', 'package' ), true ) ? $data['payment_mode'] : 'free',
+			'product_id'              => (int) ( $data['product_id'] ?? 0 ),
 			'sort_order'              => (int) ( $data['sort_order'] ?? 0 ),
 			'active'                  => empty( $data['active'] ) ? 0 : 1,
 		);
@@ -155,6 +157,58 @@ class MZK_Class_Types {
 		}
 		$wpdb->delete( MZK_DB::class_types(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB
 		return true;
+	}
+
+	/**
+	 * Where a student should go to pay for, or enrol on, this class.
+	 *
+	 * A linked WooCommerce product wins; then an explicit URL; then the classes
+	 * page; and finally nothing, which callers treat as "contact the studio".
+	 *
+	 * @param object $type Class type row.
+	 * @return string
+	 */
+	public static function purchase_url( $type ) {
+		if ( ! $type ) {
+			return '';
+		}
+
+		if ( ! empty( $type->product_id ) && function_exists( 'get_permalink' ) ) {
+			$link = get_permalink( (int) $type->product_id );
+			if ( $link ) {
+				return $link;
+			}
+		}
+
+		if ( ! empty( $type->booking_url ) ) {
+			return $type->booking_url;
+		}
+
+		$page = (int) MZK_Install::get_setting( 'classes_page_id' );
+		return $page ? add_query_arg( 'class', $type->slug, get_permalink( $page ) ) : '';
+	}
+
+	/**
+	 * How students get a place on this class.
+	 *
+	 * @param object $type Class type row.
+	 * @return string 'free', 'paid' or 'package'.
+	 */
+	public static function payment_mode( $type ) {
+		if ( ! $type ) {
+			return 'free';
+		}
+
+		$mode = $type->payment_mode ?? '';
+		if ( in_array( $mode, array( 'free', 'paid', 'package' ), true ) ) {
+			return $mode;
+		}
+
+		// Older rows predate the setting: infer it from the existing flags.
+		if ( ! empty( $type->requires_enrollment ) ) {
+			return 'package';
+		}
+		return 'free';
 	}
 
 	/**
