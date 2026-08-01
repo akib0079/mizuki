@@ -148,19 +148,26 @@ class MZK_Setup {
 	private static function find_page_with_shortcode( $shortcode ) {
 		global $wpdb;
 
-		$tag  = trim( $shortcode, '[]' );
-		$like = '%' . $wpdb->esc_like( '[' . $tag ) . '%';
+		$tag = trim( $shortcode, '[]' );
 
-		$id = $wpdb->get_var( // phpcs:ignore WordPress.DB
+		// Match the tag followed by a delimiter, so [mizuki_calendar] does not
+		// also match [mizuki_calendar_something] or a page merely documenting it.
+		$candidates = $wpdb->get_results( // phpcs:ignore WordPress.DB
 			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts}
+				"SELECT ID, post_content FROM {$wpdb->posts}
 				 WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE %s
-				 ORDER BY ID ASC LIMIT 1",
-				$like
+				 ORDER BY ID ASC LIMIT 20",
+				'%' . $wpdb->esc_like( '[' . $tag ) . '%'
 			)
 		);
 
-		return $id ? (int) $id : 0;
+		foreach ( $candidates as $candidate ) {
+			if ( preg_match( '/\[' . preg_quote( $tag, '/' ) . '(\s[^\]]*)?\]/', $candidate->post_content ) ) {
+				return (int) $candidate->ID;
+			}
+		}
+
+		return 0;
 	}
 
 	/**

@@ -573,11 +573,19 @@ class MZK_Woo {
 
 		$count = 0;
 		foreach ( $rows as $booking ) {
+			// The account is created now, not when the seat was held, so an
+			// abandoned checkout never leaves an orphan student behind.
+			$user_id = (int) $booking->user_id;
+			if ( ! $user_id && class_exists( 'MZK_Students' ) ) {
+				$user_id = MZK_Students::ensure_account( $booking->email, $booking->student_name, $booking->phone );
+			}
+
 			$wpdb->update( // phpcs:ignore WordPress.DB
 				MZK_DB::bookings(),
 				array(
 					'status'          => 'confirmed',
 					'hold_expires_at' => null,
+					'user_id'         => $user_id,
 					'updated_at'      => current_time( 'mysql' ),
 				),
 				array( 'id' => (int) $booking->id )
@@ -762,11 +770,23 @@ class MZK_Woo {
 	}
 
 	/**
-	 * Drop seat holds whose orders were never paid. Runs from cron.
+	 * Drop seat holds whose orders were never paid. Runs from cron, and from the
+	 * calendar endpoint in throttled mode.
 	 *
+	 * @param bool $throttle Skip if another request swept within the last minute.
 	 * @return int Holds released.
 	 */
-	public static function expire_holds() {
+	public static function expire_holds( $throttle = false ) {
+		// The calendar endpoint calls this on every load so availability stays
+		// honest between cron runs. Throttling keeps that to one write a minute
+		// instead of one per visitor.
+		if ( $throttle && get_transient( 'mzk_holds_swept' ) ) {
+			return 0;
+		}
+		if ( $throttle ) {
+			set_transient( 'mzk_holds_swept', 1, MINUTE_IN_SECONDS );
+		}
+
 		global $wpdb;
 		$table = MZK_DB::bookings();
 		$now   = current_time( 'mysql' );

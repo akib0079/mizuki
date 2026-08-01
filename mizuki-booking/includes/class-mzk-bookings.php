@@ -337,8 +337,13 @@ class MZK_Bookings {
 
 		// Give every student an account so their classes, packages and details all
 		// live in one place. Falls back to an e-mail-only booking if that fails.
+		//
+		// Never for a seat merely held against an unpaid order: an abandoned
+		// checkout would leave an orphan account behind and, worse, send a
+		// "welcome, set your password" e-mail to someone who never paid. Woo
+		// creates the account when the payment confirms instead.
 		$user_id = (int) ( $data['user_id'] ?? 0 );
-		if ( ! $user_id && class_exists( 'MZK_Students' ) && empty( $data['no_account'] ) ) {
+		if ( ! $user_id && ! $is_hold && class_exists( 'MZK_Students' ) && empty( $data['no_account'] ) ) {
 			$user_id = MZK_Students::ensure_account( $email, $name, $phone );
 		}
 		if ( ! $user_id ) {
@@ -373,20 +378,40 @@ class MZK_Bookings {
 			'updated_at'       => $now,
 		);
 
-		// Serialise the seat check against concurrent bookings.
-		$lock = self::lock_session( $session_id );
+		// Serialise both scarce resources against concurrent bookings: the seats on
+		// the session, and the sessions left in the student's package. Locks are
+		// always taken package-first, then session, so two requests can never grab
+		// them in opposite orders and deadlock.
+		$enrollment_lock = $enrollment_id ? self::lock_enrollment( $enrollment_id ) : null;
+		$lock            = self::lock_session( $session_id );
 
 		$taken     = MZK_Sessions::seats_taken( $session_id );
 		$effective = max( 0, (int) $session->capacity + (int) $session->capacity_adjustment );
 		if ( ! $admin && ( $taken + $seats ) > $effective ) {
 			self::release_lock( $lock );
+			self::release_lock( $enrollment_lock );
 			return new WP_Error( 'mzk_full', __( 'Sorry — this session just filled up. Please choose another date.', 'mizuki-booking' ) );
+		}
+
+		// Re-read the balance under the lock. Without this, two bookings made at
+		// the same moment could each see the last session and both spend it.
+		if ( $enrollment_id && ! $admin ) {
+			$fresh = MZK_Enrollments::get( $enrollment_id );
+			if ( ! $fresh || $fresh->sessions_left < $seats ) {
+				self::release_lock( $lock );
+				self::release_lock( $enrollment_lock );
+				return new WP_Error(
+					'mzk_enrollment_balance',
+					__( 'Your course package does not have enough sessions left for this booking. Please contact the studio — we can extend it for you.', 'mizuki-booking' )
+				);
+			}
 		}
 
 		$inserted = $wpdb->insert( $table, $row ); // phpcs:ignore WordPress.DB
 		$id       = $inserted ? (int) $wpdb->insert_id : 0;
 
 		self::release_lock( $lock );
+		self::release_lock( $enrollment_lock );
 
 		if ( ! $id ) {
 			return new WP_Error( 'mzk_insert_failed', __( 'The booking could not be saved. Please try again.', 'mizuki-booking' ) );
@@ -719,8 +744,29 @@ class MZK_Bookings {
 	 * @return string|null Lock name, or null when locking is unavailable.
 	 */
 	private static function lock_session( $session_id ) {
+		return self::acquire_lock( 'session_' . (int) $session_id );
+	}
+
+	/**
+	 * Take an advisory lock around a course package's remaining balance.
+	 *
+	 * @param int $enrollment_id Enrollment id.
+	 * @return string|null Lock name, or null when locking is unavailable.
+	 */
+	private static function lock_enrollment( $enrollment_id ) {
+		return self::acquire_lock( 'enrollment_' . (int) $enrollment_id );
+	}
+
+	/**
+	 * Take a named MySQL advisory lock, scoped to this database and prefix so two
+	 * sites sharing a server cannot block each other.
+	 *
+	 * @param string $key Lock key.
+	 * @return string|null Lock name, or null when locking is unavailable.
+	 */
+	private static function acquire_lock( $key ) {
 		global $wpdb;
-		$name = 'mzk_session_' . (int) $session_id . '_' . substr( md5( DB_NAME . $wpdb->prefix ), 0, 8 );
+		$name = 'mzk_' . $key . '_' . substr( md5( DB_NAME . $wpdb->prefix ), 0, 8 );
 		$got  = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, 5 ) ); // phpcs:ignore WordPress.DB
 		return '1' === (string) $got ? $name : null;
 	}

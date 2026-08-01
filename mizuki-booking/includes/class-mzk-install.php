@@ -324,7 +324,13 @@ class MZK_Install {
 			KEY status (status),
 			KEY enrollment_id (enrollment_id),
 			KEY manage_token (manage_token),
-			KEY order_id (order_id)
+			KEY order_id (order_id),
+			/* Seat counts per session and package balances are the two queries on
+			   every booking; both filter on a column pair, so index the pair. */
+			KEY session_status (session_id,status),
+			KEY enrollment_status (enrollment_id,status),
+			/* The hold sweep scans pending rows by expiry. */
+			KEY status_hold (status,hold_expires_at)
 		) {$charset};";
 
 		foreach ( $sql as $statement ) {
@@ -416,10 +422,24 @@ class MZK_Install {
 	 */
 	public static function uninstall() {
 		global $wpdb;
+
 		foreach ( MZK_DB::all() as $table ) {
 			$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB
 		}
+
 		delete_option( self::OPTION_SETTINGS );
 		delete_option( self::OPTION_DB_VERSION );
+		delete_option( 'mzk_generated_pages' );
+		delete_option( 'mzk_demo_content' );
+		delete_transient( 'mzk_holds_swept' );
+
+		// Students keep their accounts — deleting people's logins on an uninstall
+		// would be destructive and unexpected. Only the role definition goes.
+		if ( get_role( 'mzk_student' ) ) {
+			remove_role( 'mzk_student' );
+		}
+
+		wp_clear_scheduled_hook( 'mzk_send_reminders' );
+		wp_clear_scheduled_hook( 'mzk_daily_maintenance' );
 	}
 }

@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.0.1 =
+* Architecture review fixes: unpaid checkouts no longer create student accounts or send welcome e-mails; course packages can no longer be over-spent by simultaneous bookings; the calendar endpoint no longer writes on every page view; added composite indexes; uninstall cleans up fully.
 
 = 3.0.0 =
 * Setup screen: creates every page with its shortcode in one click, and installs or removes demo content.

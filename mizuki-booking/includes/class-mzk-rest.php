@@ -142,9 +142,9 @@ class MZK_Rest {
 	 */
 	public static function get_calendar( $request ) {
 		// Expiring stale seat holds here keeps availability honest between cron
-		// runs — it is a single indexed UPDATE and only touches overdue rows.
+		// runs. Throttled, so a burst of visitors causes one sweep, not one each.
 		if ( class_exists( 'MZK_Woo' ) && MZK_Woo::active() ) {
-			MZK_Woo::expire_holds();
+			MZK_Woo::expire_holds( true );
 		}
 
 		$today  = MZK_Utils::today();
