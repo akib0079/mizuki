@@ -127,6 +127,18 @@ $types   = MZK_Class_Types::all();
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><?php esc_html_e( 'Registrations', 'mizuki-booking' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="requires_approval" value="1" <?php checked( $current ? (int) $current->requires_approval : 0, 1 ); ?> />
+							<?php esc_html_e( 'I approve each registration before the place is confirmed', 'mizuki-booking' ); ?>
+						</label>
+						<p class="description">
+							<?php esc_html_e( 'The place is held while it waits, so nobody else can take it. The student is told as soon as you approve or decline.', 'mizuki-booking' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( 'Rescheduling', 'mizuki-booking' ); ?></th>
 					<td>
 						<label>

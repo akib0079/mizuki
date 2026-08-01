@@ -12,6 +12,14 @@ class MZK_Admin {
 	const SLUG = 'mizuki-booking';
 
 	/**
+	 * Where to send the browser after handling a form. Set when a front-end
+	 * screen posts a `mzk_return` field, so the studio stays on the front end.
+	 *
+	 * @var string
+	 */
+	private static $return_url = '';
+
+	/**
 	 * Register admin hooks.
 	 */
 	public static function init() {
@@ -54,6 +62,7 @@ class MZK_Admin {
 
 		$pages = array(
 			self::SLUG              => __( 'Schedule', 'mizuki-booking' ),
+			'mzk-setup'             => __( 'Setup', 'mizuki-booking' ),
 			'mzk-sessions'          => __( 'Sessions', 'mizuki-booking' ),
 			'mzk-bookings'          => __( 'Bookings', 'mizuki-booking' ),
 			'mzk-enrollments'       => __( 'Course Packages', 'mizuki-booking' ),
@@ -64,6 +73,7 @@ class MZK_Admin {
 
 		$callbacks = array(
 			self::SLUG        => 'render_schedule',
+			'mzk-setup'       => 'render_setup',
 			'mzk-sessions'    => 'render_sessions',
 			'mzk-bookings'    => 'render_bookings',
 			'mzk-enrollments' => 'render_enrollments',
@@ -150,9 +160,26 @@ class MZK_Admin {
 	 * @param array  $extra Extra query args.
 	 */
 	private static function redirect( $page, $extra = array() ) {
+		if ( self::$return_url ) {
+			wp_safe_redirect( self::$return_url );
+			exit;
+		}
 		$url = add_query_arg( array_merge( array( 'page' => $page ), $extra ), admin_url( 'admin.php' ) );
 		wp_safe_redirect( $url );
 		exit;
+	}
+
+	/**
+	 * Read and clear the queued notices. Used by the front-end manager, which
+	 * cannot rely on admin_notices.
+	 *
+	 * @return array
+	 */
+	public static function take_notices() {
+		$key    = 'mzk_notices_' . get_current_user_id();
+		$queued = (array) get_transient( $key );
+		delete_transient( $key );
+		return $queued;
 	}
 
 	/**
@@ -184,7 +211,76 @@ class MZK_Admin {
 
 		$post = wp_unslash( $_REQUEST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- individual fields are sanitised downstream.
 
+		// Front-end screens pass where to come back to. wp_safe_redirect() keeps
+		// this on-site, so it cannot be pointed at another domain.
+		if ( ! empty( $post['mzk_return'] ) ) {
+			self::$return_url = esc_url_raw( $post['mzk_return'] );
+		}
+
 		switch ( $action ) {
+
+			/* ---- registration approvals ---- */
+
+			case 'approve_booking':
+				$result = MZK_Students::approve( (int) ( $post['id'] ?? 0 ) );
+				self::report( $result, __( 'Registration approved — the student has been told.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings', array( 'status' => 'awaiting_approval' ) );
+				break;
+
+			case 'decline_booking':
+				$result = MZK_Students::decline( (int) ( $post['id'] ?? 0 ), $post['reason'] ?? '' );
+				self::report( $result, __( 'Registration declined — the place is free again.', 'mizuki-booking' ) );
+				self::redirect( 'mzk-bookings', array( 'status' => 'awaiting_approval' ) );
+				break;
+
+			/* ---- setup wizard ---- */
+
+			case 'create_pages':
+				$made = MZK_Setup::create_pages();
+				self::add_notice(
+					'success',
+					sprintf(
+						/* translators: 1: pages created, 2: pages already present. */
+						__( 'Pages ready: %1$d created, %2$d already existed. Their shortcodes are in place.', 'mizuki-booking' ),
+						$made['created'],
+						$made['existing']
+					)
+				);
+				self::redirect( 'mzk-setup' );
+				break;
+
+			case 'install_demo':
+				$counts = MZK_Setup::install_demo();
+				if ( isset( $counts['error'] ) ) {
+					self::add_notice( 'error', $counts['error'] );
+				} else {
+					self::add_notice(
+						'success',
+						sprintf(
+							/* translators: 1: sessions, 2: bookings, 3: course students. */
+							__( 'Demo content added: %1$d sessions, %2$d bookings and %3$d course students. Remove it any time.', 'mizuki-booking' ),
+							$counts['sessions'],
+							$counts['bookings'],
+							$counts['enrollments']
+						)
+					);
+				}
+				self::redirect( 'mzk-setup' );
+				break;
+
+			case 'remove_demo':
+				$counts = MZK_Setup::remove_demo();
+				self::add_notice(
+					'success',
+					sprintf(
+						/* translators: 1: sessions, 2: bookings. */
+						__( 'Demo content removed: %1$d sessions and %2$d bookings deleted.', 'mizuki-booking' ),
+						$counts['sessions'],
+						$counts['bookings']
+					)
+				);
+				self::redirect( 'mzk-setup' );
+				break;
 
 			/* ---- sessions ---- */
 
@@ -451,6 +547,7 @@ class MZK_Admin {
 						'cancel_enabled'          => ! empty( $post['cancel_enabled'] ),
 						'cancel_cutoff_hours'     => (int) ( $post['cancel_cutoff_hours'] ?? 72 ),
 						'max_reschedules'         => (int) ( $post['max_reschedules'] ?? 0 ),
+						'requires_approval'       => ! empty( $post['requires_approval'] ),
 						'description'             => $post['description'] ?? '',
 						'sort_order'              => (int) ( $post['sort_order'] ?? 0 ),
 						'active'                  => ! empty( $post['active'] ),
@@ -613,6 +710,10 @@ class MZK_Admin {
 
 	public static function render_schedule() {
 		self::view( 'schedule' );
+	}
+
+	public static function render_setup() {
+		self::view( 'setup' );
 	}
 
 	public static function render_sessions() {

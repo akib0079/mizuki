@@ -115,6 +115,7 @@ class MZK_Class_Types {
 			'cancel_enabled'          => empty( $data['cancel_enabled'] ) ? 0 : 1,
 			'cancel_cutoff_hours'     => max( 0, (int) ( $data['cancel_cutoff_hours'] ?? 72 ) ),
 			'max_reschedules'         => max( 0, (int) ( $data['max_reschedules'] ?? 0 ) ),
+			'requires_approval'       => empty( $data['requires_approval'] ) ? 0 : 1,
 			'description'             => isset( $data['description'] ) ? wp_kses_post( $data['description'] ) : '',
 			'sort_order'              => (int) ( $data['sort_order'] ?? 0 ),
 			'active'                  => empty( $data['active'] ) ? 0 : 1,

@@ -278,6 +278,13 @@ class MZK_Bookings {
 			? $data['status']
 			: 'confirmed';
 
+		// Classes set to "approve registrations" park the booking until the studio
+		// says yes. The seat is still held, so it cannot be taken meanwhile.
+		if ( 'confirmed' === $status && ! $admin && class_exists( 'MZK_Students' )
+			&& MZK_Students::needs_approval( (int) $session->class_type_id ) ) {
+			$status = 'awaiting_approval';
+		}
+
 		// A seat held for an unpaid order does not spend a package session yet;
 		// MZK_Bookings::attach_enrollment() runs once payment confirms it.
 		$is_hold = 'pending' === $status;
@@ -328,7 +335,12 @@ class MZK_Bookings {
 			$enrollment_id = 0;
 		}
 
+		// Give every student an account so their classes, packages and details all
+		// live in one place. Falls back to an e-mail-only booking if that fails.
 		$user_id = (int) ( $data['user_id'] ?? 0 );
+		if ( ! $user_id && class_exists( 'MZK_Students' ) && empty( $data['no_account'] ) ) {
+			$user_id = MZK_Students::ensure_account( $email, $name, $phone );
+		}
 		if ( ! $user_id ) {
 			$user = get_user_by( 'email', $email );
 			if ( $user ) {
@@ -389,9 +401,15 @@ class MZK_Bookings {
 		do_action( 'mzk_booking_created', $id, $row );
 
 		if ( empty( $data['skip_emails'] ) ) {
-			MZK_Mailer::send_confirmation( $id );
-			if ( MZK_Install::get_setting( 'notify_admin' ) ) {
-				MZK_Mailer::notify_admin_new_booking( $id );
+			if ( 'awaiting_approval' === $status ) {
+				// "We have your request" now; the confirmation follows on approval.
+				MZK_Students::send_decision( $id, 'pending' );
+				MZK_Students::notify_admin_pending( $id );
+			} else {
+				MZK_Mailer::send_confirmation( $id );
+				if ( MZK_Install::get_setting( 'notify_admin' ) ) {
+					MZK_Mailer::notify_admin_new_booking( $id );
+				}
 			}
 		}
 

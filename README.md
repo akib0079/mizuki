@@ -58,8 +58,18 @@ Class slugs are set per class under **Bookings → Classes & Rules**. The four s
 
 | Shortcode | What it shows |
 |---|---|
-| `[mizuki_my_bookings]` | The student's bookings, with reschedule and cancel |
+| `[mizuki_login]` | Login, and registration for new students |
+| `[mizuki_dashboard]` | The student's own area: classes, course balance, details |
+| `[mizuki_my_bookings]` | A single booking from an e-mail link, with reschedule and cancel |
 | `[mizuki_my_courses]` | Course package balance, sessions used, expiry |
+
+### Studio
+
+| Shortcode | What it shows |
+|---|---|
+| `[mizuki_manage]` | Front-end control panel — approvals, sessions, places, closures. Only visible to users who can manage bookings. |
+
+**You don't have to create these pages by hand.** Go to **Bookings → Setup → Create all pages now** and every page above is generated with its shortcode in place and linked in Settings.
 
 `[mizuki_my_bookings]` works two ways: logged-in students see all their bookings; anyone arriving from the link in a confirmation e-mail can manage that one booking without an account.
 

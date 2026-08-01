@@ -232,7 +232,7 @@ class MZK_Utils {
 	 * @return string[]
 	 */
 	public static function occupying_statuses() {
-		return array( 'confirmed', 'attended', 'pending' );
+		return array( 'confirmed', 'attended', 'pending', 'awaiting_approval' );
 	}
 
 	/**
@@ -242,6 +242,8 @@ class MZK_Utils {
 	 */
 	public static function booking_statuses() {
 		return array(
+			'awaiting_approval' => __( 'Awaiting approval', 'mizuki-booking' ),
+			'declined'  => __( 'Declined', 'mizuki-booking' ),
 			'pending'   => __( 'Awaiting payment', 'mizuki-booking' ),
 			'confirmed' => __( 'Confirmed', 'mizuki-booking' ),
 			'attended'  => __( 'Attended', 'mizuki-booking' ),

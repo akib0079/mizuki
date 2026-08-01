@@ -27,7 +27,11 @@ class MZK_Install {
 			'reminder_hour'        => 9,
 			'booking_page_id'      => 0,
 			'manage_page_id'       => 0,
+			'login_page_id'        => 0,
+			'dashboard_page_id'    => 0,
+			'studio_page_id'       => 0,
 			'require_phone'        => 1,
+			'auto_create_account'  => 1,
 			// WooCommerce integration.
 			'woo_enabled'          => 1,
 			'woo_hold_minutes'     => 45,
@@ -41,7 +45,31 @@ class MZK_Install {
 			'reschedule_body'      => self::default_reschedule_body(),
 			'cancel_subject'       => __( 'Your booking has been cancelled', 'mizuki-booking' ),
 			'cancel_body'          => self::default_cancel_body(),
+			'pending_subject'      => __( 'We have received your registration - {session_title}', 'mizuki-booking' ),
+			'pending_body'         => self::default_pending_body(),
+			'approved_subject'     => __( 'Your place is confirmed - {session_title}', 'mizuki-booking' ),
+			'approved_body'        => self::default_approved_body(),
+			'declined_subject'     => __( 'About your registration - {session_title}', 'mizuki-booking' ),
+			'declined_body'        => self::default_declined_body(),
+			'welcome_subject'      => __( 'Your {studio_name} account', 'mizuki-booking' ),
+			'welcome_body'         => self::default_welcome_body(),
 		);
+	}
+
+	public static function default_pending_body() {
+		return "Hi {student_name},\n\nThank you for registering for {class_type}. We have your request and will confirm your place shortly.\n\nClass: {class_type}\nDate: {session_date}\nTime: {session_time}\n\nYou can check the status of your registration any time here:\n{dashboard_url}\n\n{studio_name}";
+	}
+
+	public static function default_approved_body() {
+		return "Hi {student_name},\n\nGood news — your place is confirmed.\n\nClass: {class_type}\nDate: {session_date}\nTime: {session_time}\nDuration: {session_duration}\n\nManage or reschedule your booking here:\n{manage_url}\n\nSee you soon!\n{studio_name}";
+	}
+
+	public static function default_declined_body() {
+		return "Hi {student_name},\n\nThank you for your interest in {class_type} on {session_date}.\n\nUnfortunately we are not able to confirm your place for this session. {decline_reason}\n\nPlease do have a look at our other available dates, or reply to this e-mail and we will help you find one.\n\n{studio_name}";
+	}
+
+	public static function default_welcome_body() {
+		return "Hi {student_name},\n\nWelcome to {studio_name}. We have created an account for you so you can see your classes, reschedule them and check your course balance in one place.\n\nYour account: {dashboard_url}\nYour username: {student_email}\n\nSet your password here:\n{password_url}\n\n{studio_name}";
 	}
 
 	public static function default_confirm_body() {
@@ -87,6 +115,7 @@ class MZK_Install {
 	public static function activate() {
 		self::create_tables();
 		self::seed_class_types();
+		MZK_Students::add_role();
 
 		if ( false === get_option( self::OPTION_SETTINGS ) ) {
 			add_option( self::OPTION_SETTINGS, self::default_settings() );
@@ -119,6 +148,9 @@ class MZK_Install {
 		}
 		self::create_tables();
 		self::seed_class_types();
+		if ( class_exists( 'MZK_Students' ) ) {
+			MZK_Students::add_role();
+		}
 		update_option( self::OPTION_DB_VERSION, MZK_DB_VERSION );
 
 		// The My Account endpoints are new in 2.0; their rewrite rules need one
@@ -162,6 +194,7 @@ class MZK_Install {
 			cancel_enabled tinyint(1) NOT NULL DEFAULT 1,
 			cancel_cutoff_hours int(11) NOT NULL DEFAULT 72,
 			max_reschedules smallint(5) unsigned NOT NULL DEFAULT 0,
+			requires_approval tinyint(1) NOT NULL DEFAULT 0,
 			description text NULL,
 			sort_order smallint(5) NOT NULL DEFAULT 0,
 			active tinyint(1) NOT NULL DEFAULT 1,
@@ -279,6 +312,9 @@ class MZK_Install {
 			order_item_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			product_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			hold_expires_at datetime NULL,
+			approved_at datetime NULL,
+			approved_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			decline_reason varchar(190) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
 			updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
 			PRIMARY KEY  (id),

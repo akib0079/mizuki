@@ -631,6 +631,163 @@ textarea.mzk-input {
 	font-size: 0.78em;
 }
 
+/* Login / register --------------------------------------------------------- */
+
+.mzk-auth__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 20px;
+	align-items: start;
+}
+
+.mzk-auth__foot {
+	margin-top: 20px;
+	text-align: center;
+}
+
+/* Student dashboard -------------------------------------------------------- */
+
+.mzk-dash__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 20px;
+	flex-wrap: wrap;
+	padding-bottom: 20px;
+	margin-bottom: 24px;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-dash__hello {
+	margin: 0 0 4px;
+	font-size: 1em;
+}
+
+.mzk-dash__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-dash__title {
+	margin: 32px 0 14px;
+	font-size: 0.82em;
+}
+
+.mzk-dash__title:first-of-type {
+	margin-top: 0;
+}
+
+.mzk-booking--waiting {
+	border-top-color: #c9a227;
+}
+
+.mzk-history {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border-top: 1px solid var(--mzk-border);
+}
+
+.mzk-history li {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--mzk-border);
+	font-size: 0.85em;
+}
+
+.mzk-history__date {
+	min-width: 120px;
+	color: var(--mzk-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-history__class {
+	flex: 1 1 auto;
+}
+
+/* Front-end studio manager ------------------------------------------------- */
+
+.mzk-studio__tabs {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+	border-bottom: 1px solid var(--mzk-border);
+	margin-bottom: 24px;
+}
+
+.mzk-studio__tab {
+	padding: 10px 18px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.72em;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	text-decoration: none;
+	color: var(--mzk-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+}
+
+.mzk-studio__tab:hover {
+	color: var(--mzk-text);
+}
+
+.mzk-studio__tab.is-active {
+	color: var(--mzk-accent);
+	border-bottom-color: var(--mzk-accent);
+}
+
+.mzk-form--grid {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	align-items: end;
+}
+
+.mzk-form--grid .mzk-form__actions {
+	grid-column: 1 / -1;
+}
+
+.mzk-inline-form {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 12px 0;
+}
+
+.mzk-inline-form .mzk-input {
+	flex: 1 1 220px;
+	border: 1px solid var(--mzk-border);
+	padding: 8px 10px;
+	min-height: 40px;
+}
+
+.mzk-session__tools {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin-top: 12px;
+}
+
+.mzk-mini {
+	display: inline-block;
+	border: 1px solid var(--mzk-border);
+	padding: 4px 10px;
+	font-size: 0.72em;
+	line-height: 1.4;
+	text-decoration: none;
+	color: var(--mzk-text);
+	background: var(--mzk-bg);
+}
+
+.mzk-mini:hover {
+	border-color: var(--mzk-accent);
+	color: var(--mzk-accent);
+}
+
 /* List view --------------------------------------------------------------- */
 
 .mzk-list__day {

@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,13 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.0.0 =
+* Setup screen: creates every page with its shortcode in one click, and installs or removes demo content.
+* Registration approval per class — the place is held while it waits, and the student is told either way.
+* Student accounts created automatically, with a login page and a dashboard showing classes, course balance and details.
+* Front-end studio manager [mizuki_manage]: approvals, sessions, places and closures without wp-admin.
+* New shortcodes: [mizuki_login], [mizuki_dashboard], [mizuki_manage].
 
 = 2.0.0 =
 * All-in-one: WooCommerce integration. Session-booking and course-package products, seats held during checkout and confirmed on payment, packages granted automatically.

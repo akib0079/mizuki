@@ -276,3 +276,29 @@
 	display: flex;
 	gap: 8px;
 }
+
+/* Setup screen ------------------------------------------------------------ */
+
+.mzk-ready {
+	background: #edf7f1;
+	border-left: 4px solid #3f827a;
+	padding: 12px 16px;
+	margin: 0 0 12px;
+}
+
+.mzk-todo {
+	margin: 0 0 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.mzk-todo li {
+	background: #fcf9ee;
+	border-left: 4px solid #c9a227;
+	padding: 10px 14px;
+	margin-bottom: 6px;
+}
+
+.button-hero {
+	margin-top: 6px;
+}

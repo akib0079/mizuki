@@ -43,6 +43,62 @@ Booking calendar plugin for [mizuki.com.sg](https://mizuki.com.sg/). Built to th
 3. Two days before: reminder e-mail.
 4. Manage link → reschedule (only to sessions allowed by that class's rule) or cancel. Blocked attempts explain why, e.g. *"Ikebana bookings can no longer be changed — rescheduling closes 3 days before the class starts."*
 
+## One-click setup
+
+**Bookings → Setup** does the whole first-run in two presses:
+
+1. **Create all pages now** — generates every page with its shortcode already in place, links each one in Settings, and reuses anything that already exists (safe to press twice):
+
+| Page | Shortcode |
+|---|---|
+| Book a Class | `[mizuki_calendar]` |
+| Student Login | `[mizuki_login]` |
+| My Classes | `[mizuki_dashboard]` |
+| Manage My Booking | `[mizuki_my_bookings]` |
+| Studio Manager | `[mizuki_manage]` |
+
+2. **Add demo content** — a realistic week of classes so the studio can click around before entering anything: a weekly pattern across all four classes, eight weeks of generated sessions, a three-day closure, two course students, seven bookings and one registration waiting for approval. **Remove demo content** deletes exactly what it created and nothing else.
+
+The screen also lists what's still outstanding — missing pages, no weekly pattern, no bookable sessions, or a site timezone that isn't Singapore.
+
+## Registration and approval
+
+Set **Classes & Rules → Registrations → "I approve each registration"** on any class that shouldn't confirm automatically.
+
+```
+Student registers
+      │
+      ▼
+Awaiting approval ── the place is HELD, so nobody else can take it
+      │              student gets "we have your request"
+      │              studio gets "one to approve"
+      ├── Approve ──► confirmed + confirmation e-mail (+ package session drawn)
+      └── Decline ──► place freed + a polite e-mail, with your reason if you gave one
+```
+
+Approve or decline from **Bookings** in wp-admin, or from the front-end manager.
+
+## Student accounts
+
+Every student gets an account automatically the first time they book — no extra step for them. They receive a welcome e-mail with a set-password link, and from then on everything lives in one place at **My Classes**: upcoming classes, anything awaiting approval, course balance with a progress bar, past classes, and their own details.
+
+Students are kept out of wp-admin and don't see the toolbar; they land on their dashboard when they log in.
+
+Turn account creation off with **Settings → auto_create_account** if the studio would rather keep bookings e-mail-only.
+
+## Front-end management
+
+`[mizuki_manage]` gives the studio a control panel on the site itself — no wp-admin needed. Invisible to everyone else.
+
+| Tab | What it does |
+|---|---|
+| **Coming up** | The next two weeks, each session with its student list and phone numbers |
+| **Approvals** | Approve or decline registrations, with an optional reason |
+| **Sessions** | Add a session; adjust places, hide/show, edit for the next 6 weeks |
+| **Blocked dates** | Close the studio, see and remove upcoming closures |
+
+It posts to the same handler as the admin screens, so there is one capability check, one nonce check and one set of rules for both.
+
 ## The all-in-one flow
 
 One plugin owns the whole journey — calendar, payment, course packages and the student's own area — so seats have a single source of truth.
