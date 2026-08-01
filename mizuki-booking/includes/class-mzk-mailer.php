@@ -108,7 +108,95 @@ class MZK_Mailer {
 			return false;
 		}
 
-		return wp_mail( $mail['to'], $mail['subject'], $mail['html'], $mail['headers'] );
+		$sent  = false;
+		$via   = 'wp_mail';
+		$error = '';
+
+		// Resend first when it is switched on: it reports real failures, where
+		// wp_mail() on shared hosting usually reports success and delivers nothing.
+		if ( class_exists( 'MZK_Resend' ) && MZK_Resend::enabled() ) {
+			$via    = 'resend';
+			$result = MZK_Resend::send( $mail['to'], $mail['subject'], $mail['html'] );
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+
+				if ( MZK_Install::get_setting( 'mail_fallback', 1 ) ) {
+					$via  = 'resend → wp_mail';
+					$sent = wp_mail( $mail['to'], $mail['subject'], $mail['html'], $mail['headers'] );
+					if ( $sent ) {
+						$error .= ' ' . __( '(fell back to the WordPress mailer)', 'mizuki-booking' );
+					}
+				}
+			} else {
+				$sent = true;
+			}
+		} else {
+			$sent = wp_mail( $mail['to'], $mail['subject'], $mail['html'], $mail['headers'] );
+			if ( ! $sent ) {
+				$error = __( 'The WordPress mailer returned a failure. The host may not be able to send mail at all.', 'mizuki-booking' );
+			}
+		}
+
+		self::log( $mail['to'], $mail['subject'], $context, $via, $sent, $error );
+
+		return $sent;
+	}
+
+	/* ------------------------------------------------------- delivery log */
+
+	const LOG_OPTION = 'mzk_mail_log';
+	const LOG_LIMIT  = 100;
+
+	/**
+	 * Record one delivery attempt, so "no e-mails are arriving" can be answered
+	 * with evidence rather than guesswork.
+	 *
+	 * @param string $to      Recipient.
+	 * @param string $subject Subject.
+	 * @param string $context Mail context slug.
+	 * @param string $via     Which transport was used.
+	 * @param bool   $sent    Whether it went.
+	 * @param string $error   Failure reason, if any.
+	 */
+	public static function log( $to, $subject, $context, $via, $sent, $error = '' ) {
+		if ( ! MZK_Install::get_setting( 'mail_log', 1 ) ) {
+			return;
+		}
+
+		$log = (array) get_option( self::LOG_OPTION, array() );
+
+		array_unshift(
+			$log,
+			array(
+				'time'    => current_time( 'mysql' ),
+				'to'      => $to,
+				'subject' => $subject,
+				'context' => $context,
+				'via'     => $via,
+				'sent'    => (bool) $sent,
+				'error'   => $error,
+			)
+		);
+
+		update_option( self::LOG_OPTION, array_slice( $log, 0, self::LOG_LIMIT ), false );
+	}
+
+	/**
+	 * The most recent delivery attempts, newest first.
+	 *
+	 * @param int $limit How many.
+	 * @return array
+	 */
+	public static function recent_log( $limit = 30 ) {
+		return array_slice( (array) get_option( self::LOG_OPTION, array() ), 0, (int) $limit );
+	}
+
+	/**
+	 * Empty the delivery log.
+	 */
+	public static function clear_log() {
+		delete_option( self::LOG_OPTION );
 	}
 
 	/**
@@ -299,7 +387,15 @@ class MZK_Mailer {
 	 */
 	public static function send_test( $template, $to ) {
 		if ( ! is_email( $to ) ) {
-			return false;
+			return new WP_Error( 'mzk_bad_email', __( 'That is not a valid e-mail address.', 'mizuki-booking' ) );
+		}
+
+		// Report the real reason a test fails, rather than a bare "could not send".
+		if ( class_exists( 'MZK_Resend' ) && MZK_Resend::enabled() ) {
+			$check = MZK_Resend::verify();
+			if ( is_wp_error( $check ) ) {
+				return $check;
+			}
 		}
 		$settings = MZK_Install::get_settings();
 		$key      = in_array( $template, array( 'confirm', 'reminder', 'reschedule', 'cancel' ), true ) ? $template : 'confirm';
@@ -323,11 +419,23 @@ class MZK_Mailer {
 			'{sessions_left}'    => '12',
 		);
 
-		return self::send(
+		$sent = self::send(
 			$to,
 			'[' . __( 'Test', 'mizuki-booking' ) . '] ' . self::render( $settings[ $key . '_subject' ], $sample ),
 			self::render( $settings[ $key . '_body' ], $sample ),
 			'test'
+		);
+
+		if ( $sent ) {
+			return true;
+		}
+
+		$log  = self::recent_log( 1 );
+		$note = isset( $log[0]['error'] ) && $log[0]['error'] ? $log[0]['error'] : '';
+
+		return new WP_Error(
+			'mzk_send_failed',
+			$note ? $note : __( 'The message could not be sent.', 'mizuki-booking' )
 		);
 	}
 }

@@ -697,6 +697,23 @@ class MZK_Admin {
 				$settings['booking_page_id']      = (int) ( $post['booking_page_id'] ?? 0 );
 				$settings['manage_page_id']       = (int) ( $post['manage_page_id'] ?? 0 );
 
+				// E-mail delivery.
+				$settings['mail_provider']   = in_array( $post['mail_provider'] ?? 'wp', array( 'wp', 'resend' ), true )
+					? $post['mail_provider']
+					: 'wp';
+				$settings['mail_from_name']  = sanitize_text_field( $post['mail_from_name'] ?? '' );
+				$settings['mail_from_email'] = sanitize_email( $post['mail_from_email'] ?? '' );
+				$settings['mail_reply_to']   = sanitize_email( $post['mail_reply_to'] ?? '' );
+				$settings['mail_fallback']   = empty( $post['mail_fallback'] ) ? 0 : 1;
+				$settings['mail_log']        = empty( $post['mail_log'] ) ? 0 : 1;
+
+				// Only overwrite the API key when a new one is actually typed, so
+				// re-saving the page cannot wipe it with the masked placeholder.
+				$new_key = trim( (string) ( $post['resend_api_key'] ?? '' ) );
+				if ( '' !== $new_key && false === strpos( $new_key, '•' ) ) {
+					$settings['resend_api_key'] = sanitize_text_field( $new_key );
+				}
+
 				update_option( MZK_Install::OPTION_SETTINGS, $settings );
 				self::add_notice( 'success', __( 'Settings saved.', 'mizuki-booking' ) );
 				self::redirect( 'mzk-settings' );
@@ -707,10 +724,30 @@ class MZK_Admin {
 					sanitize_key( $post['template'] ?? 'confirm' ),
 					sanitize_email( $post['to'] ?? '' )
 				);
-				self::add_notice(
-					$sent ? 'success' : 'error',
-					$sent ? __( 'Test e-mail sent.', 'mizuki-booking' ) : __( 'The test e-mail could not be sent. Check the address and your site mail setup.', 'mizuki-booking' )
-				);
+				if ( is_wp_error( $sent ) ) {
+					self::add_notice( 'error', $sent->get_error_message() );
+				} else {
+					self::add_notice(
+						'success',
+						__( 'Test e-mail sent. If it does not arrive, check the delivery log below and your spam folder.', 'mizuki-booking' )
+					);
+				}
+				self::redirect( 'mzk-settings' );
+				break;
+
+			case 'verify_resend':
+				$check = MZK_Resend::verify();
+				if ( is_wp_error( $check ) ) {
+					self::add_notice( 'error', $check->get_error_message() );
+				} else {
+					self::add_notice( 'success', __( 'Resend is connected and your sending domain is verified.', 'mizuki-booking' ) );
+				}
+				self::redirect( 'mzk-settings' );
+				break;
+
+			case 'clear_mail_log':
+				MZK_Mailer::clear_log();
+				self::add_notice( 'success', __( 'Delivery log cleared.', 'mizuki-booking' ) );
 				self::redirect( 'mzk-settings' );
 				break;
 

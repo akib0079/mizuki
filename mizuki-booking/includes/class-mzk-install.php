@@ -33,6 +33,14 @@ class MZK_Install {
 			'studio_page_id'       => 0,
 			'require_phone'        => 1,
 			'auto_create_account'  => 1,
+			// E-mail delivery.
+			'mail_provider'        => 'wp',
+			'resend_api_key'       => '',
+			'mail_from_name'       => get_bloginfo( 'name' ),
+			'mail_from_email'      => get_option( 'admin_email' ),
+			'mail_reply_to'        => get_option( 'admin_email' ),
+			'mail_fallback'        => 1,
+			'mail_log'             => 1,
 			// WooCommerce integration.
 			'woo_enabled'          => 1,
 			'woo_hold_minutes'     => 45,

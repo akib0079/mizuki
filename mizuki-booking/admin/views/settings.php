@@ -170,6 +170,80 @@ $tags     = '{student_name} {student_email} {student_phone} {class_type} {sessio
 			</tr>
 		</table>
 
+		<h2><?php esc_html_e( 'E-mail delivery', 'mizuki-booking' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'If students are not receiving anything, this is almost always why. Shared hosting often accepts a message and quietly drops it — sending through Resend removes the guesswork, because every send returns a real answer.', 'mizuki-booking' ); ?>
+		</p>
+
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Send e-mail using', 'mizuki-booking' ); ?></th>
+				<td>
+					<label style="display:block;margin-bottom:6px;">
+						<input type="radio" name="mail_provider" value="wp" <?php checked( $settings['mail_provider'], 'wp' ); ?> />
+						<?php esc_html_e( 'The WordPress mailer (your host)', 'mizuki-booking' ); ?>
+					</label>
+					<label style="display:block;">
+						<input type="radio" name="mail_provider" value="resend" <?php checked( $settings['mail_provider'], 'resend' ); ?> />
+						<strong><?php esc_html_e( 'Resend — recommended', 'mizuki-booking' ); ?></strong>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="mzk-resend-key"><?php esc_html_e( 'Resend API key', 'mizuki-booking' ); ?></label></th>
+				<td>
+					<input type="password" id="mzk-resend-key" name="resend_api_key" class="regular-text"
+						autocomplete="new-password"
+						placeholder="<?php echo esc_attr( MZK_Resend::masked_key() ? MZK_Resend::masked_key() : 're_...' ); ?>" />
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: link to Resend. */
+							esc_html__( 'Create one at %s → API Keys. Leave blank to keep the key you already saved.', 'mizuki-booking' ),
+							'<a href="https://resend.com/api-keys" target="_blank" rel="noopener">resend.com</a>'
+						);
+						?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Send from', 'mizuki-booking' ); ?></th>
+				<td>
+					<input type="text" name="mail_from_name" class="regular-text"
+						value="<?php echo esc_attr( $settings['mail_from_name'] ); ?>"
+						placeholder="<?php esc_attr_e( 'Studio name', 'mizuki-booking' ); ?>" />
+					<input type="email" name="mail_from_email" class="regular-text"
+						value="<?php echo esc_attr( $settings['mail_from_email'] ); ?>"
+						placeholder="hello@mizuki.com.sg" />
+					<p class="description">
+						<strong><?php esc_html_e( 'The domain of this address must be verified on your Resend account', 'mizuki-booking' ); ?></strong> —
+						<?php esc_html_e( 'otherwise Resend will refuse to send. While testing you can use onboarding@resend.dev, which only delivers to the address that owns the Resend account.', 'mizuki-booking' ); ?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Replies go to', 'mizuki-booking' ); ?></th>
+				<td>
+					<input type="email" name="mail_reply_to" class="regular-text"
+						value="<?php echo esc_attr( $settings['mail_reply_to'] ); ?>" />
+					<p class="description"><?php esc_html_e( 'Where a student’s reply lands. Usually the studio inbox.', 'mizuki-booking' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Safety net', 'mizuki-booking' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" name="mail_fallback" value="1" <?php checked( (int) $settings['mail_fallback'], 1 ); ?> />
+						<?php esc_html_e( 'If Resend fails, try the WordPress mailer as a backup', 'mizuki-booking' ); ?>
+					</label><br />
+					<label>
+						<input type="checkbox" name="mail_log" value="1" <?php checked( (int) $settings['mail_log'], 1 ); ?> />
+						<?php esc_html_e( 'Keep a log of the last 100 e-mails and what happened to them', 'mizuki-booking' ); ?>
+					</label>
+				</td>
+			</tr>
+		</table>
+
 		<h2><?php esc_html_e( 'E-mails', 'mizuki-booking' ); ?></h2>
 		<p class="description">
 			<?php esc_html_e( 'Available tags:', 'mizuki-booking' ); ?>
@@ -217,6 +291,17 @@ $tags     = '{student_name} {student_email} {student_phone} {class_type} {sessio
 				</p>
 			</form>
 
+			<?php if ( 'resend' === $settings['mail_provider'] ) : ?>
+				<h2><?php esc_html_e( 'Check the Resend connection', 'mizuki-booking' ); ?></h2>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php MZK_Admin::form_fields( 'verify_resend' ); ?>
+					<p>
+						<button type="submit" class="button"><?php esc_html_e( 'Test the connection', 'mizuki-booking' ); ?></button>
+						<span class="description"><?php esc_html_e( 'Checks the key and whether your sending domain is verified — without e-mailing anyone.', 'mizuki-booking' ); ?></span>
+					</p>
+				</form>
+			<?php endif; ?>
+
 			<h2><?php esc_html_e( 'Run reminders now', 'mizuki-booking' ); ?></h2>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php MZK_Admin::form_fields( 'run_reminders' ); ?>
@@ -225,6 +310,56 @@ $tags     = '{student_name} {student_email} {student_phone} {class_type} {sessio
 					<span class="description"><?php esc_html_e( 'Sends reminders for classes at the configured distance. Each booking is only ever reminded once.', 'mizuki-booking' ); ?></span>
 				</p>
 			</form>
+		</div>
+
+		<div class="mzk-card">
+			<h2><?php esc_html_e( 'Delivery log', 'mizuki-booking' ); ?></h2>
+			<?php $log = MZK_Mailer::recent_log( 25 ); ?>
+
+			<?php if ( ! $log ) : ?>
+				<p><?php esc_html_e( 'Nothing sent yet. Send a test above, or make a booking, and it will appear here.', 'mizuki-booking' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'When', 'mizuki-booking' ); ?></th>
+							<th><?php esc_html_e( 'To', 'mizuki-booking' ); ?></th>
+							<th><?php esc_html_e( 'About', 'mizuki-booking' ); ?></th>
+							<th><?php esc_html_e( 'Result', 'mizuki-booking' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( $log as $entry ) : ?>
+						<tr>
+							<td><?php echo esc_html( mysql2date( 'j M, H:i', $entry['time'] ) ); ?></td>
+							<td><?php echo esc_html( $entry['to'] ); ?></td>
+							<td>
+								<?php echo esc_html( $entry['subject'] ); ?><br />
+								<span class="mzk-muted"><?php echo esc_html( $entry['context'] . ' · ' . $entry['via'] ); ?></span>
+							</td>
+							<td>
+								<?php if ( $entry['sent'] ) : ?>
+									<span class="mzk-tag">&#10003; <?php esc_html_e( 'sent', 'mizuki-booking' ); ?></span>
+								<?php else : ?>
+									<span class="mzk-tag mzk-tag--warn"><?php esc_html_e( 'failed', 'mizuki-booking' ); ?></span>
+								<?php endif; ?>
+								<?php if ( ! empty( $entry['error'] ) ) : ?>
+									<br /><span class="mzk-danger"><?php echo esc_html( $entry['error'] ); ?></span>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php MZK_Admin::form_fields( 'clear_mail_log' ); ?>
+					<p class="submit"><button type="submit" class="button"><?php esc_html_e( 'Clear the log', 'mizuki-booking' ); ?></button></p>
+				</form>
+			<?php endif; ?>
+			<p class="description">
+				<?php esc_html_e( '“Sent” means the mail service accepted it. If a student still cannot find it, ask them to check spam — and make sure your sending domain has SPF and DKIM set up.', 'mizuki-booking' ); ?>
+			</p>
 		</div>
 
 		<div class="mzk-card">

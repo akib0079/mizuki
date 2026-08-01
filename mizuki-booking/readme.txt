@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.2.1
+Stable tag: 3.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,12 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.3.0 =
+* E-mail can now be sent through Resend instead of the host's mailer, which is the usual reason nothing arrives on shared hosting.
+* New delivery log: the last 100 e-mails with what happened to each, so a missing message can be diagnosed instead of guessed at.
+* Test the Resend connection without e-mailing anyone — it checks the API key and whether your sending domain is verified.
+* Test sends and failures now report the real reason rather than a bare failure.
 
 = 3.2.1 =
 * Class detail page is now a single column: a full-width photo across the top, with the description, details, booking button and dates underneath.
