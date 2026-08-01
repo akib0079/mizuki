@@ -250,6 +250,91 @@ class MZK_Setup {
 		return $todo;
 	}
 
+	/**
+	 * Health check: are the tables really there, and what is actually in them?
+	 *
+	 * When "nothing shows up", the cause is almost always one of these three —
+	 * a table that never got created, no active weekly pattern, or a schedule
+	 * that was never generated. Guessing wastes hours; this answers it.
+	 *
+	 * @return array
+	 */
+	public static function diagnostics() {
+		global $wpdb;
+
+		$tables = array(
+			'class_types'     => MZK_DB::class_types(),
+			'sessions'        => MZK_DB::sessions(),
+			'templates'       => MZK_DB::templates(),
+			'blackouts'       => MZK_DB::blackouts(),
+			'enrollments'     => MZK_DB::enrollments(),
+			'enrollment_log'  => MZK_DB::enrollment_log(),
+			'bookings'        => MZK_DB::bookings(),
+		);
+
+		$out = array(
+			'tables'  => array(),
+			'missing' => array(),
+		);
+
+		foreach ( $tables as $label => $table ) {
+			$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB
+			$count  = $exists ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) : 0; // phpcs:ignore WordPress.DB
+
+			$out['tables'][ $label ] = array(
+				'name'   => $table,
+				'exists' => $exists,
+				'rows'   => $count,
+			);
+
+			if ( ! $exists ) {
+				$out['missing'][] = $table;
+			}
+		}
+
+		$sessions = $tables['sessions'];
+		$out['active_templates'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tables['templates']} WHERE active = 1" ); // phpcs:ignore WordPress.DB
+		$out['future_sessions']  = $out['tables']['sessions']['exists']
+			? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$sessions} WHERE session_date >= %s", MZK_Utils::today() ) ) // phpcs:ignore WordPress.DB
+			: 0;
+		$out['first_session'] = $out['tables']['sessions']['exists']
+			? $wpdb->get_var( $wpdb->prepare( "SELECT MIN(session_date) FROM {$sessions} WHERE session_date >= %s", MZK_Utils::today() ) ) // phpcs:ignore WordPress.DB
+			: null;
+		$out['last_session'] = $out['tables']['sessions']['exists']
+			? $wpdb->get_var( "SELECT MAX(session_date) FROM {$sessions}" ) // phpcs:ignore WordPress.DB
+			: null;
+
+		$out['db_version']     = get_option( self::OPTION_DB_VERSION_KEY, '—' );
+		$out['plugin_version'] = MZK_VERSION;
+		$out['timezone']       = wp_timezone_string();
+		$out['last_error']     = get_option( 'mzk_last_generate', array() );
+
+		return $out;
+	}
+
+	/**
+	 * Option key holding the stored schema version.
+	 */
+	const OPTION_DB_VERSION_KEY = 'mzk_db_version';
+
+	/**
+	 * Force the schema to be rebuilt. Safe: dbDelta only adds what is missing and
+	 * never drops data.
+	 *
+	 * @return array
+	 */
+	public static function repair_tables() {
+		MZK_Install::create_tables();
+		MZK_Install::seed_class_types();
+
+		$after = self::diagnostics();
+
+		return array(
+			'missing' => $after['missing'],
+			'ok'      => empty( $after['missing'] ),
+		);
+	}
+
 	/* --------------------------------------------------------- demo data */
 
 	/**

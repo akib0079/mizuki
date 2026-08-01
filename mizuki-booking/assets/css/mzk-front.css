@@ -34,7 +34,8 @@
 }
 
 .mzk-calendar *,
-.mzk-manage * {
+.mzk-manage *,
+.mzk-classes * {
 	box-sizing: border-box;
 }
 
@@ -42,14 +43,16 @@
    globally, so neutralise those inside the plugin's own markup. */
 
 .mzk-calendar ul,
-.mzk-manage ul {
+.mzk-manage ul,
+.mzk-classes ul {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
 .mzk-calendar li,
-.mzk-manage li {
+.mzk-manage li,
+.mzk-classes li {
 	margin: 0;
 }
 
@@ -69,7 +72,9 @@
 .mzk-calendar h3,
 .mzk-calendar h4,
 .mzk-manage h3,
-.mzk-manage h4 {
+.mzk-manage h4,
+.mzk-classes h3,
+.mzk-classes h4 {
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
@@ -374,7 +379,8 @@
    which would otherwise paint the secondary buttons solid teal with navy text. */
 
 .mzk-calendar .mzk-btn,
-.mzk-manage .mzk-btn {
+.mzk-manage .mzk-btn,
+.mzk-classes .mzk-btn {
 	display: inline-block;
 	-webkit-appearance: none;
 	appearance: none;
@@ -399,7 +405,8 @@
    card; secondary actions stay on the quieter utility tier. */
 
 .mzk-calendar .mzk-btn--primary,
-.mzk-manage .mzk-btn--primary {
+.mzk-manage .mzk-btn--primary,
+.mzk-classes .mzk-btn--primary {
 	background-color: var(--mzk-accent) !important;
 	border-color: var(--mzk-accent) !important;
 	color: #fff;
@@ -426,7 +433,8 @@
 }
 
 .mzk-calendar .mzk-btn--ghost,
-.mzk-manage .mzk-btn--ghost {
+.mzk-manage .mzk-btn--ghost,
+.mzk-classes .mzk-btn--ghost {
 	background-color: transparent !important;
 	border-color: var(--mzk-primary) !important;
 	color: var(--mzk-primary);
@@ -646,12 +654,13 @@ textarea.mzk-input {
 	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
 
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 28px;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 32px;
 	color: var(--mzk-text);
 	font-family: var(--mzk-font);
 	font-weight: 300;
-	line-height: 1.65;
+	font-size: clamp(14px, calc(14px + (18 - 14) * (100vw - 375px) / 1525), 18px);
+	line-height: 1.7;
 }
 
 @media (min-width: 900px) {
@@ -662,112 +671,136 @@ textarea.mzk-input {
 
 .mzk-classes--single {
 	display: block;
+	max-width: 1040px;
 }
+
+/* Card -------------------------------------------------------------------- */
 
 .mzk-class {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--mzk-border);
-	border-top: 3px solid var(--mzk-class, var(--mzk-accent));
 	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.mzk-class::before {
+	content: "";
+	display: block;
+	height: 3px;
+	background: var(--mzk-class, var(--mzk-accent));
+}
+
+.mzk-class:hover {
+	border-color: #d8d2ce;
+	box-shadow: 0 10px 28px rgba(22, 42, 60, 0.08);
+	transform: translateY(-2px);
 }
 
 .mzk-class__media {
 	overflow: hidden;
 	background: var(--mzk-surface);
+	aspect-ratio: 4 / 3;
 }
 
-.mzk-class__img,
 .mzk-class__media img {
 	display: block;
 	width: 100%;
 	height: 100%;
-	max-height: 260px;
 	object-fit: cover;
+	transition: transform 0.5s ease;
 }
 
-.mzk-class--detail .mzk-class__img {
-	max-height: 420px;
+.mzk-class:hover .mzk-class__media img {
+	transform: scale(1.04);
 }
 
 .mzk-class__body {
-	padding: 24px;
+	padding: 28px 26px 26px;
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
 }
 
 .mzk-class__name {
-	margin: 0 0 10px;
+	margin: 0 0 12px;
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 2px;
-	font-size: 0.9em;
+	font-size: 0.85em;
+	line-height: 1.4;
 	color: var(--mzk-text);
 }
 
 .mzk-class__summary {
-	margin: 0 0 16px;
-	font-size: 0.92em;
+	margin: 0 0 22px;
+	font-size: 0.9em;
+	color: #4a5560;
 }
 
-.mzk-class__desc {
-	font-size: 0.9em;
-	margin-bottom: 8px;
-}
+/* Facts ------------------------------------------------------------------- */
 
 .mzk-class__facts {
-	list-style: none;
-	margin: 0 0 18px;
+	margin: 0 0 22px;
 	padding: 0;
+	list-style: none;
 	border-top: 1px solid var(--mzk-border);
 }
 
 .mzk-class__facts li {
 	display: flex;
 	justify-content: space-between;
-	gap: 14px;
-	padding: 9px 0;
+	align-items: baseline;
+	gap: 16px;
+	padding: 11px 0;
 	border-bottom: 1px solid var(--mzk-border);
-	font-size: 0.8em;
+	font-size: 0.78em;
 }
 
-.mzk-class__facts span {
+.mzk-class__facts > li > span:first-child {
 	color: var(--mzk-muted);
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: 0.08em;
 	font-size: 0.92em;
+	white-space: nowrap;
 }
 
+.mzk-class__facts strong {
+	font-weight: 600;
+	text-align: right;
+}
+
+/* Dates ------------------------------------------------------------------- */
+
 .mzk-class__next {
-	margin: 0 0 8px;
+	margin: 0 0 10px;
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 1.5px;
-	font-size: 0.72em;
+	font-size: 0.7em;
 	color: var(--mzk-muted);
 }
 
 .mzk-class__dates {
-	list-style: none;
-	margin: 0 0 20px;
+	margin: 0 0 24px;
 	padding: 0;
+	list-style: none;
 }
 
 .mzk-class__dates li {
 	display: flex;
-	gap: 10px;
-	align-items: center;
+	gap: 12px;
+	align-items: baseline;
 	flex-wrap: wrap;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--mzk-border);
-	font-size: 0.82em;
+	padding: 9px 0;
+	border-bottom: 1px dotted var(--mzk-border);
+	font-size: 0.8em;
 }
 
-.mzk-class__dates--full li {
-	gap: 16px;
+.mzk-class__dates li:last-child {
+	border-bottom: 0;
 }
 
 .mzk-class__time {
@@ -777,16 +810,109 @@ textarea.mzk-input {
 
 .mzk-class__seats {
 	margin-left: auto;
-	color: var(--mzk-muted);
-	font-size: 0.92em;
+	color: var(--mzk-accent);
+	font-size: 0.94em;
+	white-space: nowrap;
 }
+
+/* Actions ----------------------------------------------------------------- */
 
 .mzk-class__actions {
 	display: flex;
-	gap: 10px;
+	gap: 12px;
+	align-items: center;
 	flex-wrap: wrap;
 	margin-top: auto;
-	padding-top: 4px;
+	padding-top: 6px;
+}
+
+.mzk-classes .mzk-btn--ghost {
+	border-color: transparent !important;
+	padding-left: 4px;
+	padding-right: 4px;
+	text-decoration: underline;
+	text-underline-offset: 4px;
+}
+
+.mzk-classes .mzk-btn--ghost:hover,
+.mzk-classes .mzk-btn--ghost:focus {
+	background-color: transparent !important;
+	color: var(--mzk-accent);
+}
+
+.mzk-classes .mzk-note,
+.mzk-classes .mzk-notice {
+	font-size: 0.8em;
+}
+
+.mzk-classes .mzk-note {
+	color: var(--mzk-muted);
+	margin: 0 0 22px;
+}
+
+/* Detail view ------------------------------------------------------------- */
+
+.mzk-class--detail::before {
+	height: 4px;
+}
+
+@media (min-width: 900px) {
+	.mzk-class--detail {
+		display: grid;
+		grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+		grid-template-rows: auto 1fr;
+	}
+
+	.mzk-class--detail::before {
+		grid-column: 1 / -1;
+	}
+
+	.mzk-class--detail .mzk-class__media {
+		aspect-ratio: auto;
+		height: 100%;
+	}
+
+	.mzk-class--detail .mzk-class__body {
+		padding: 40px 40px 36px;
+	}
+}
+
+.mzk-class--detail .mzk-class__name {
+	font-size: 1.05em;
+	margin-bottom: 14px;
+}
+
+.mzk-class--detail .mzk-class__summary {
+	font-size: 1em;
+	color: var(--mzk-text);
+}
+
+.mzk-class__desc {
+	font-size: 0.9em;
+	margin: 0 0 24px;
+	color: #4a5560;
+}
+
+.mzk-class__desc p {
+	margin: 0 0 14px;
+}
+
+.mzk-class--detail .mzk-dash__title {
+	margin: 30px 0 14px;
+	font-size: 0.75em;
+}
+
+.mzk-class__dates--full {
+	margin-bottom: 0;
+}
+
+.mzk-class__dates--full li {
+	padding: 12px 0;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-class__dates--full .mzk-mini {
+	margin-left: 4px;
 }
 
 /* Login / register --------------------------------------------------------- */

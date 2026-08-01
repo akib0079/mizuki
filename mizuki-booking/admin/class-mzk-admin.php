@@ -104,12 +104,17 @@ class MZK_Admin {
 			return;
 		}
 		wp_enqueue_style( 'mzk-admin', MZK_URL . 'assets/css/mzk-admin.css', array(), MZK_VERSION );
-		wp_enqueue_script( 'mzk-admin', MZK_URL . 'assets/js/mzk-admin.js', array(), MZK_VERSION, true );
 
-		// The class editor picks a photo from the media library.
+		// The class editor picks a photo from the media library. wp_enqueue_media()
+		// must run first, and mzk-admin must depend on media-editor — otherwise our
+		// script executes before wp.media exists and the button does nothing.
+		$deps = array();
 		if ( false !== strpos( $hook, 'mzk-classes' ) ) {
 			wp_enqueue_media();
+			$deps[] = 'media-editor';
 		}
+
+		wp_enqueue_script( 'mzk-admin', MZK_URL . 'assets/js/mzk-admin.js', $deps, MZK_VERSION, true );
 		wp_localize_script(
 			'mzk-admin',
 			'MZK_ADMIN',
@@ -351,12 +356,52 @@ class MZK_Admin {
 				self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
 				break;
 
+			case 'repair_tables':
+				$result = MZK_Setup::repair_tables();
+				if ( $result['ok'] ) {
+					self::add_notice( 'success', __( 'Database checked — all tables are present.', 'mizuki-booking' ) );
+				} else {
+					self::add_notice(
+						'error',
+						sprintf(
+							/* translators: %s: table names. */
+							__( 'These tables could not be created: %s. Your database user may not have permission to create tables — ask your host.', 'mizuki-booking' ),
+							implode( ', ', $result['missing'] )
+						)
+					);
+				}
+				self::redirect( 'mzk-setup' );
+				break;
+
 			case 'generate':
 				$stats = MZK_Sessions::generate(
 					sanitize_text_field( $post['from'] ?? '' ),
 					sanitize_text_field( $post['to'] ?? '' ),
 					(int) ( $post['template_id'] ?? 0 )
 				);
+
+				if ( ! empty( $stats['error'] ) ) {
+					self::add_notice(
+						'error',
+						sprintf(
+							/* translators: %s: database error. */
+							__( 'The schedule could not be generated. The database said: %s', 'mizuki-booking' ),
+							$stats['error']
+						)
+					);
+					self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
+					break;
+				}
+
+				if ( ! $stats['created'] && ! $stats['skipped'] ) {
+					self::add_notice(
+						'warning',
+						__( 'No sessions were created. Check that you have at least one active weekly session, and that the dates you chose include the right days of the week.', 'mizuki-booking' )
+					);
+					self::redirect( 'mzk-sessions', array( 'tab' => 'templates' ) );
+					break;
+				}
+
 				self::add_notice(
 					'success',
 					sprintf(

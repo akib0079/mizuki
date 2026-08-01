@@ -20,13 +20,19 @@
 	} );
 
 	// Class photo picker, using the WordPress media library.
+	// The handler is bound regardless and checks wp.media when clicked, so load
+	// order can never leave the button dead.
 	var media = document.querySelector( '[data-mzk-media]' );
-	if ( media && window.wp && window.wp.media ) {
+	if ( media ) {
 		var input = media.querySelector( 'input[type="hidden"]' );
 		var preview = media.querySelector( '.mzk-media__preview' );
 		var frame = null;
 
 		media.querySelector( '[data-mzk-media-pick]' ).addEventListener( 'click', function () {
+			if ( ! window.wp || ! window.wp.media ) {
+				window.alert( 'The WordPress media library did not load on this screen. Please reload the page and try again.' );
+				return;
+			}
 			if ( ! frame ) {
 				frame = window.wp.media( {
 					title: 'Choose a photo for this class',

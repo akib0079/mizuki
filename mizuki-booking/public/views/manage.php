@@ -16,6 +16,7 @@ $weekdays = MZK_Utils::weekdays();
 <div class="mzk-manage mzk-studio">
 
 	<?php foreach ( $notices as $notice ) : ?>
+		<?php if ( empty( $notice['message'] ) ) { continue; } ?>
 		<div class="mzk-notice mzk-notice--<?php echo 'error' === $notice['type'] ? 'error' : 'info'; ?>">
 			<?php echo esc_html( $notice['message'] ); ?>
 		</div>

@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,14 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.1.1 =
+* Fixed: comments inside a CREATE TABLE made dbDelta mis-parse the bookings table, so schema updates could fail silently. Added an automated guard against it.
+* Fixed: the classes page had no button styling, because the shared component styles were scoped to the calendar and manager only.
+* Fixed: the class photo picker did nothing, because the script ran before the WordPress media library had loaded.
+* Redesigned the classes page: proper cards, image framing, fact rows, next dates and real call-to-action buttons.
+* New Diagnostics panel on the Setup screen showing which tables exist, row counts and the last schedule generation, with a Check and repair database button.
+* Generating the schedule now reports database errors and warns when nothing was created, instead of silently reporting zero.
 
 = 3.1.0 =
 * Fixed: the My Account endpoints were registered at the site root, which stopped the "My Classes" page resolving at /my-classes/ and showed the blog index instead.

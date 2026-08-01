@@ -502,6 +502,7 @@ class MZK_Sessions {
 			'created' => 0,
 			'skipped' => 0,
 			'blocked' => 0,
+			'error'   => '',
 		);
 		if ( ! $from || ! $to || $to < $from ) {
 			return $stats;
@@ -571,11 +572,38 @@ class MZK_Sessions {
 						'updated_at'          => $now,
 					)
 				);
+				if ( $wpdb->last_error ) {
+					// Record why, instead of reporting a silent zero. This is what
+					// turns "nothing shows up" into an answer.
+					$stats['error'] = $wpdb->last_error;
+					update_option(
+						'mzk_last_generate',
+						array(
+							'when'  => current_time( 'mysql' ),
+							'error' => $wpdb->last_error,
+						),
+						false
+					);
+					return $stats;
+				}
+
 				++$stats['created'];
 			}
 
 			$cursor = gmdate( 'Y-m-d', strtotime( $cursor . ' +1 day' ) );
 		}
+
+		update_option(
+			'mzk_last_generate',
+			array(
+				'when'    => current_time( 'mysql' ),
+				'created' => $stats['created'],
+				'skipped' => $stats['skipped'],
+				'blocked' => $stats['blocked'],
+				'range'   => $from . ' → ' . $to,
+			),
+			false
+		);
 
 		return $stats;
 	}

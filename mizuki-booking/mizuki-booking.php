@@ -3,7 +3,7 @@
  * Plugin Name:       Mizuki Booking
  * Plugin URI:        https://mizuki.com.sg/
  * Description:       Class booking calendar for Mizuki Flower Studio: multi-session days, per-session participant limits, 2+ month schedule, rule-based rescheduling, blackout dates, course session packages with extensions, auto confirmation and reminder emails.
- * Version:           3.1.0
+ * Version:           3.1.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Avix Digital Agency
@@ -14,8 +14,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MZK_VERSION', '3.1.0' );
-define( 'MZK_DB_VERSION', '3.1.0' );
+define( 'MZK_VERSION', '3.1.1' );
+define( 'MZK_DB_VERSION', '3.1.1' );
 define( 'MZK_FILE', __FILE__ );
 define( 'MZK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MZK_URL', plugin_dir_url( __FILE__ ) );

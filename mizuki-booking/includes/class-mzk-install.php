@@ -330,13 +330,13 @@ class MZK_Install {
 			KEY enrollment_id (enrollment_id),
 			KEY manage_token (manage_token),
 			KEY order_id (order_id),
-			/* Seat counts per session and package balances are the two queries on
-			   every booking; both filter on a column pair, so index the pair. */
 			KEY session_status (session_id,status),
 			KEY enrollment_status (enrollment_id,status),
-			/* The hold sweep scans pending rows by expiry. */
 			KEY status_hold (status,hold_expires_at)
 		) {$charset};";
+		// NOTE: never put comments inside these CREATE TABLE strings. dbDelta()
+		// parses them line by line as column and key definitions, so a comment
+		// line silently corrupts the table it belongs to.
 
 		foreach ( $sql as $statement ) {
 			dbDelta( $statement );

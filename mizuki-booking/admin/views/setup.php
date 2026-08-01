@@ -141,6 +141,104 @@ foreach ( $pages as $page ) {
 	</div>
 
 	<div class="mzk-card">
+		<h2><?php esc_html_e( 'Diagnostics', 'mizuki-booking' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'If sessions are not appearing on the calendar, the answer is almost always here.', 'mizuki-booking' ); ?>
+		</p>
+
+		<?php $diag = MZK_Setup::diagnostics(); ?>
+
+		<?php if ( $diag['missing'] ) : ?>
+			<div class="notice notice-error inline">
+				<p>
+					<strong><?php esc_html_e( 'Some database tables are missing.', 'mizuki-booking' ); ?></strong><br />
+					<?php echo esc_html( implode( ', ', $diag['missing'] ) ); ?><br />
+					<?php esc_html_e( 'Nothing can be saved until these exist. Press “Check and repair database” below.', 'mizuki-booking' ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<table class="widefat striped">
+			<tbody>
+				<?php foreach ( $diag['tables'] as $label => $info ) : ?>
+					<tr>
+						<td style="width: 220px;"><code><?php echo esc_html( $label ); ?></code></td>
+						<td>
+							<?php if ( $info['exists'] ) : ?>
+								<span class="mzk-tag">&#10003; <?php esc_html_e( 'present', 'mizuki-booking' ); ?></span>
+								<?php
+								printf(
+									/* translators: %d: number of rows. */
+									esc_html( _n( '%d row', '%d rows', (int) $info['rows'], 'mizuki-booking' ) ),
+									(int) $info['rows']
+								);
+								?>
+							<?php else : ?>
+								<span class="mzk-tag mzk-tag--warn"><?php esc_html_e( 'MISSING', 'mizuki-booking' ); ?></span>
+							<?php endif; ?>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				<tr>
+					<td><?php esc_html_e( 'Active weekly sessions', 'mizuki-booking' ); ?></td>
+					<td>
+						<strong><?php echo esc_html( $diag['active_templates'] ); ?></strong>
+						<?php if ( ! $diag['active_templates'] ) : ?>
+							— <?php esc_html_e( 'add one under Sessions → Weekly pattern, or nothing can be generated', 'mizuki-booking' ); ?>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Sessions from today onwards', 'mizuki-booking' ); ?></td>
+					<td>
+						<strong><?php echo esc_html( $diag['future_sessions'] ); ?></strong>
+						<?php if ( $diag['first_session'] ) : ?>
+							— <?php echo esc_html( $diag['first_session'] . ' → ' . $diag['last_session'] ); ?>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Last generate run', 'mizuki-booking' ); ?></td>
+					<td>
+						<?php
+						$last = (array) $diag['last_error'];
+						if ( ! $last ) {
+							esc_html_e( 'never run', 'mizuki-booking' );
+						} elseif ( ! empty( $last['error'] ) ) {
+							echo '<span class="mzk-danger">' . esc_html( $last['error'] ) . '</span> (' . esc_html( $last['when'] ) . ')';
+						} else {
+							printf(
+								/* translators: 1: created, 2: range, 3: time. */
+								esc_html__( '%1$d created for %2$s at %3$s', 'mizuki-booking' ),
+								(int) ( $last['created'] ?? 0 ),
+								esc_html( $last['range'] ?? '—' ),
+								esc_html( $last['when'] ?? '—' )
+							);
+						}
+						?>
+					</td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Plugin / schema version', 'mizuki-booking' ); ?></td>
+					<td><?php echo esc_html( $diag['plugin_version'] . ' / ' . $diag['db_version'] ); ?></td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Site timezone', 'mizuki-booking' ); ?></td>
+					<td><?php echo esc_html( $diag['timezone'] ); ?></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php MZK_Admin::form_fields( 'repair_tables' ); ?>
+			<p class="submit">
+				<button type="submit" class="button"><?php esc_html_e( 'Check and repair database', 'mizuki-booking' ); ?></button>
+				<span class="description"><?php esc_html_e( 'Only adds what is missing — it never deletes anything.', 'mizuki-booking' ); ?></span>
+			</p>
+		</form>
+	</div>
+
+	<div class="mzk-card">
 		<h2><?php esc_html_e( 'Every shortcode', 'mizuki-booking' ); ?></h2>
 		<p class="description"><?php esc_html_e( 'Drop any of these into a page or an Elementor shortcode widget.', 'mizuki-booking' ); ?></p>
 		<table class="widefat striped">
