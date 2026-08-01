@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.1.1
+Stable tag: 3.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.1.2 =
+* Fixed: links and buttons on the plugin pages appeared underlined in the theme's blue. Astra underlines every link inside post content and on WooCommerce pages, which outranked the button styles.
 
 = 3.1.1 =
 * Fixed: comments inside a CREATE TABLE made dbDelta mis-parse the bookings table, so schema updates could fail silently. Added an automated guard against it.

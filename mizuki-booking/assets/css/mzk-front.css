@@ -67,6 +67,27 @@
 	text-transform: none;
 }
 
+/* Astra underlines every link inside .entry-content and on WooCommerce pages:
+     .ast-single-post .entry-content a, … .woocommerce-js … { text-decoration: underline }
+   That rule outranks the button styles, so buttons and card links came out
+   underlined in the theme's blue. Buttons and list rows carry their own
+   affordance (fill, border, hover), so the underline is removed here and kept
+   only as a hover cue on plain text links. */
+
+.mzk-calendar a,
+.mzk-manage a,
+.mzk-classes a {
+	text-decoration: none !important;
+	text-decoration-color: currentColor;
+}
+
+.mzk-calendar a:not([class]):hover,
+.mzk-manage a:not([class]):hover,
+.mzk-classes a:not([class]):hover {
+	text-decoration: underline !important;
+	text-underline-offset: 3px;
+}
+
 /* Headings — uppercase with the short rule the site uses under section titles */
 
 .mzk-calendar h3,
@@ -830,8 +851,6 @@ textarea.mzk-input {
 	border-color: transparent !important;
 	padding-left: 4px;
 	padding-right: 4px;
-	text-decoration: underline;
-	text-underline-offset: 4px;
 }
 
 .mzk-classes .mzk-btn--ghost:hover,
