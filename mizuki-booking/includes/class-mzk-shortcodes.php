@@ -137,6 +137,10 @@ class MZK_Shortcodes {
 			'bookAndPay'     => __( 'Book and pay', 'mizuki-booking' ),
 			'awaitingNote'   => __( 'Your place is held while the studio confirms it. We will e-mail you as soon as it is approved.', 'mizuki-booking' ),
 			'viewBooking'    => __( 'View my booking', 'mizuki-booking' ),
+			'seeCourse'      => __( 'See the course', 'mizuki-booking' ),
+			'courseIntro'    => __( '%s is a course: you join it once, then book your sessions on whichever dates suit you.', 'mizuki-booking' ),
+			'joinCourse'     => __( 'Join this course', 'mizuki-booking' ),
+			'alreadyEnrolled' => __( 'I have already joined — choose a date', 'mizuki-booking' ),
 			'notReady'       => __( 'The booking system did not load correctly on this page. Please refresh, and tell the studio if it keeps happening.', 'mizuki-booking' ),
 		);
 	}

@@ -188,6 +188,7 @@ class MZK_Rest {
 				'colour'             => $ct->colour,
 				'courseBased'        => (bool) $ct->course_based,
 				'requiresEnrollment' => (bool) $ct->requires_enrollment,
+				'enrolUrl'           => MZK_Class_Types::purchase_url( $ct ),
 				'rescheduleEnabled'  => (bool) $ct->reschedule_enabled,
 				'rescheduleCutoff'   => MZK_Class_Types::describe_cutoff( (float) $ct->reschedule_cutoff_hours ),
 				'description'        => wp_kses_post( $ct->description ),

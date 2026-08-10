@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.5.0
+Stable tag: 3.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,10 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.5.1 =
+* Course classes now explain themselves before asking for details: the dialog offers "Join this course" first, with a way through for students who already have a package.
+* When a booking is refused, the link to the course or product is now shown. The gate had always supplied it; the dialog was discarding it and leaving a dead end.
 
 = 3.5.0 =
 * Every plugin container now carries one root class, and the stylesheet is scoped to it, so theme rules can no longer override buttons, links, lists, headings or fields.

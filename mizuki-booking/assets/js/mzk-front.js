@@ -103,6 +103,26 @@
 		return box;
 	}
 
+	/**
+	 * An error notice that also offers the way forward.
+	 *
+	 * The booking gate returns enrolUrl/enrolLabel when it refuses — "this is a
+	 * course, here is how to join it". Showing only the sentence left the student
+	 * at a dead end, which is exactly what that data was added to prevent.
+	 */
+	function errorNotice( error ) {
+		var box = notice( 'error', ( error && error.message ) || I18N.error );
+		var data = error && error.data;
+
+		if ( data && data.enrolUrl ) {
+			var link = el( 'a', 'mzk-btn mzk-btn--primary mzk-notice__cta', data.enrolLabel || I18N.seeCourse );
+			link.href = data.enrolUrl;
+			box.appendChild( link );
+		}
+
+		return box;
+	}
+
 	/* ------------------------------------------------------------- calendar */
 
 	function Calendar( root ) {
@@ -751,6 +771,9 @@
 		api( '/calendar', { query: { class_type: this.classSlug } } )
 			.then( function ( data ) {
 				self.data = data;
+				self.klass = ( data.classes || [] ).filter( function ( c ) {
+					return c.slug === self.classSlug;
+				} )[ 0 ] || null;
 				self.sessions = [];
 				Object.keys( data.days || {} ).sort().forEach( function ( key ) {
 					data.days[ key ].forEach( function ( s ) { self.sessions.push( s ); } );
@@ -776,6 +799,13 @@
 	BookModal.prototype.renderPick = function () {
 		var self = this;
 		clear( this.content );
+
+		// A course has to be joined before its sessions can be booked. Say so
+		// first, rather than after a form the student has already filled in.
+		if ( this.klass && this.klass.requiresEnrollment && this.klass.enrolUrl && ! this.skipEnrolStep ) {
+			this.renderEnrolFirst();
+			return;
+		}
 
 		if ( ! this.sessions.length ) {
 			this.content.appendChild( notice( 'info', I18N.noneInRange ) );
@@ -814,6 +844,37 @@
 		} );
 
 		this.content.appendChild( list );
+	};
+
+	BookModal.prototype.renderEnrolFirst = function () {
+		var self = this;
+		clear( this.content );
+
+		var intro = el( 'p', 'mzk-modal__lead', sprintf1( I18N.courseIntro, this.klass.name ) );
+		this.content.appendChild( intro );
+
+		if ( this.klass.description ) {
+			var desc = el( 'p', 'mzk-modal__desc' );
+			desc.innerHTML = this.klass.description;
+			this.content.appendChild( desc );
+		}
+
+		var actions = el( 'div', 'mzk-modal__choice' );
+
+		var join = el( 'a', 'mzk-btn mzk-btn--primary', I18N.joinCourse );
+		join.href = this.klass.enrolUrl;
+		actions.appendChild( join );
+
+		// Students who already hold a package carry straight on to the dates.
+		var already = el( 'button', 'mzk-btn mzk-btn--ghost', I18N.alreadyEnrolled );
+		already.type = 'button';
+		already.addEventListener( 'click', function () {
+			self.skipEnrolStep = true;
+			self.renderPick();
+		} );
+		actions.appendChild( already );
+
+		this.content.appendChild( actions );
 	};
 
 	BookModal.prototype.renderForm = function () {
@@ -903,7 +964,7 @@
 				.catch( function ( error ) {
 					submit.disabled = false;
 					submit.textContent = I18N.confirm;
-					form.appendChild( notice( 'error', error.message || I18N.error ) );
+					form.appendChild( errorNotice( error ) );
 				} );
 		} );
 
