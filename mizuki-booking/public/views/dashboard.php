@@ -31,7 +31,7 @@ $enrollments = MZK_Enrollments::query( array( 'email' => $user->user_email ) );
 $booking_page = (int) MZK_Install::get_setting( 'booking_page_id' );
 $phone        = get_user_meta( $user->ID, 'mzk_phone', true );
 ?>
-<div class="mzk-manage mzk-dash">
+<div class="mzk-root mzk-manage mzk-dash">
 
 	<div class="mzk-dash__head">
 		<div>

@@ -355,7 +355,7 @@ class MZK_Students {
 		if ( is_user_logged_in() ) {
 			$user = wp_get_current_user();
 			ob_start();
-			echo '<div class="mzk-manage"><div class="mzk-booking">';
+			echo '<div class="mzk-root mzk-manage"><div class="mzk-booking">';
 			printf(
 				'<h3 class="mzk-booking__title">%s</h3>',
 				esc_html( sprintf( /* translators: %s: name. */ __( 'You are logged in as %s', 'mizuki-booking' ), $user->display_name ) )
@@ -385,7 +385,7 @@ class MZK_Students {
 		MZK_Shortcodes::ensure_assets();
 
 		if ( ! is_user_logged_in() ) {
-			return '<div class="mzk-manage"><div class="mzk-notice mzk-notice--info">'
+			return '<div class="mzk-root mzk-manage"><div class="mzk-notice mzk-notice--info">'
 				. esc_html__( 'Please log in to see your classes.', 'mizuki-booking' )
 				. '</div><p><a class="mzk-btn mzk-btn--primary" href="' . esc_url( self::login_url() ) . '">'
 				. esc_html__( 'Log in', 'mizuki-booking' ) . '</a></p></div>';

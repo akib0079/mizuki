@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.4.1
+Stable tag: 3.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,11 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.5.0 =
+* Every plugin container now carries one root class, and the stylesheet is scoped to it, so theme rules can no longer override buttons, links, lists, headings or fields.
+* One motion system across all screens: a single easing curve and two durations, with staggered entrances, hover lifts, a sliding tab underline and an animated dialog. All of it switches off under the system's reduced-motion setting.
+* Consistent keyboard focus rings throughout.
 
 = 3.4.1 =
 * Fixed: Book now failed with a JSON error. The classes page loaded the script without its configuration, so it had no address to call.

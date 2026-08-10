@@ -713,7 +713,7 @@
 		this.overlay.setAttribute( 'aria-modal', 'true' );
 		this.overlay.setAttribute( 'aria-label', I18N.book );
 
-		this.dialog = el( 'div', 'mzk-modal__box' );
+		this.dialog = el( 'div', 'mzk-root mzk-modal__box' );
 
 		var head = el( 'div', 'mzk-modal__head' );
 		head.appendChild( el( 'h3', 'mzk-modal__title', this.className || I18N.book ) );

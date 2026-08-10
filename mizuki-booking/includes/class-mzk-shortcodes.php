@@ -179,7 +179,7 @@ class MZK_Shortcodes {
 
 		ob_start();
 		?>
-		<div class="mzk-calendar"
+		<div class="mzk-root mzk-calendar"
 			data-mzk-calendar
 			data-class="<?php echo esc_attr( $class_slug ); ?>"
 			data-months="<?php echo esc_attr( $months ); ?>"
@@ -210,7 +210,7 @@ class MZK_Shortcodes {
 
 		ob_start();
 		?>
-		<div class="mzk-manage"
+		<div class="mzk-root mzk-manage"
 			data-mzk-manage
 			data-booking="<?php echo esc_attr( $booking_id ); ?>"
 			data-token="<?php echo esc_attr( $token ); ?>"

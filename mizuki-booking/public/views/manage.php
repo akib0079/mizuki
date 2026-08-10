@@ -13,7 +13,7 @@ $types    = MZK_Class_Types::all( true );
 $statuses = MZK_Utils::session_statuses();
 $weekdays = MZK_Utils::weekdays();
 ?>
-<div class="mzk-manage mzk-studio">
+<div class="mzk-root mzk-manage mzk-studio">
 
 	<?php foreach ( $notices as $notice ) : ?>
 		<?php if ( empty( $notice['message'] ) ) { continue; } ?>

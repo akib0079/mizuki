@@ -32,7 +32,7 @@ class MZK_Manage {
 		if ( ! current_user_can( MZK_Utils::cap() ) ) {
 			// Say nothing at all to visitors — the page simply looks empty.
 			return current_user_can( 'read' )
-				? '<div class="mzk-manage"><div class="mzk-notice mzk-notice--info">'
+				? '<div class="mzk-root mzk-manage"><div class="mzk-notice mzk-notice--info">'
 					. esc_html__( 'You do not have permission to manage bookings.', 'mizuki-booking' )
 					. '</div></div>'
 				: '';

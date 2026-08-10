@@ -114,7 +114,7 @@ class MZK_Classes_Page {
 		$types = MZK_Class_Types::all( true );
 
 		if ( ! $types ) {
-			echo '<div class="mzk-classes"><div class="mzk-notice mzk-notice--info">'
+			echo '<div class="mzk-root mzk-classes"><div class="mzk-notice mzk-notice--info">'
 				. esc_html__( 'No classes are listed yet.', 'mizuki-booking' )
 				. '</div></div>';
 			return;
@@ -122,7 +122,7 @@ class MZK_Classes_Page {
 
 		$columns = max( 1, min( 4, (int) $atts['columns'] ) );
 		?>
-		<div class="mzk-classes" style="--mzk-cols: <?php echo esc_attr( $columns ); ?>">
+		<div class="mzk-root mzk-classes" style="--mzk-cols: <?php echo esc_attr( $columns ); ?>">
 			<?php foreach ( $types as $type ) : ?>
 				<?php
 				$url   = self::enrol_url( $type );
@@ -225,7 +225,7 @@ class MZK_Classes_Page {
 		$url      = self::enrol_url( $type );
 		$sessions = self::next_dates( $type, 24 );
 		?>
-		<div class="mzk-classes mzk-classes--single">
+		<div class="mzk-root mzk-classes mzk-classes--single">
 			<article class="mzk-class mzk-class--detail" style="--mzk-class: <?php echo esc_attr( $type->colour ); ?>">
 
 				<?php if ( $type->image_id ) : ?>

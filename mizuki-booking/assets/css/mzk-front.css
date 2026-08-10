@@ -1,145 +1,435 @@
 /**
- * Mizuki Booking - front-end styles.
+ * Mizuki Booking — front-end styles.
  *
- * Matched to the live mizuki.com.sg design system (Astra + Elementor Pro):
- *   Colours   primary #2D5778 · action #3F827A · text #162A3C · muted #555D60
- *             surface #F0F5FA · border #e7e7e7 · rule #bcbcbc
- *   Type      body Poppins 300 · headings Radio Canada 700 uppercase, 2px tracking
- *   Shape     square corners throughout, buttons 12px/24px solid teal
+ * ---------------------------------------------------------------------------
+ * HOW THIS SURVIVES THE THEME
+ * ---------------------------------------------------------------------------
+ * Astra and Elementor style links, buttons, lists and fields globally, and some
+ * of those rules are both specific and !important:
  *
- * Colours read the Elementor global variables first so the plugin follows any
- * future palette change in the site kit, with the current values as fallbacks.
+ *   .menu-toggle, button, .ast-button, …   { background-color: #3F827A !important;
+ *                                            border-color:     #3F827A !important }
+ *   .ast-single-post .entry-content a, …   { text-decoration: underline }   (0,2,1)
+ *
+ * Every plugin container carries `.mzk-root`. Two conventions keep us in charge
+ * without spraying !important everywhere:
+ *
+ *   .mzk-root .thing            (0,2,0)  — normal components
+ *   .mzk-root.mzk-root .thing   (0,3,0)  — "armoured": beats theme rules that
+ *                                          reach (0,2,1), e.g. entry-content a
+ *   !important                           — used ONLY where the theme itself
+ *                                          used !important (button fill/border)
+ *
+ * Repeating the class is a deliberate, cheap specificity bump; it is not a typo.
+ *
+ * ---------------------------------------------------------------------------
+ * DESIGN
+ * ---------------------------------------------------------------------------
+ * Matched to mizuki.com.sg: navy #2D5778, teal #3F827A, text #162A3C, Poppins
+ * body, Radio Canada uppercase headings with 2px tracking, square corners.
+ * Colours read the Elementor kit variables first, so a palette change in the
+ * site kit carries through automatically.
+ *
+ * Motion is one system: two durations, one easing curve, and everything is
+ * disabled under prefers-reduced-motion.
  */
 
-.mzk-calendar,
-.mzk-manage {
+/* ===========================================================================
+   1. Tokens
+   ======================================================================== */
+
+.mzk-root {
 	--mzk-primary: var(--e-global-color-primary, #2d5778);
 	--mzk-accent: var(--e-global-color-secondary, #3f827a);
 	--mzk-text: var(--e-global-color-text, #162a3c);
 	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
+	--mzk-soft: #4a5560;
 	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
 	--mzk-bg: #ffffff;
 	--mzk-border: #e7e7e7;
+	--mzk-border-strong: #d8d2ce;
 	--mzk-rule: #bcbcbc;
 	--mzk-alert: #9d3b3b;
+	--mzk-alert-bg: #fbf1f1;
+	--mzk-warn: #c9a227;
 
 	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
 	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
+
+	/* Motion — one curve, two speeds. */
+	--mzk-ease: cubic-bezier(0.22, 0.72, 0.28, 1);
+	--mzk-fast: 0.16s;
+	--mzk-slow: 0.34s;
+
+	--mzk-shadow: 0 10px 28px rgba(22, 42, 60, 0.08);
+	--mzk-shadow-lg: 0 20px 60px rgba(22, 42, 60, 0.26);
 
 	color: var(--mzk-text);
 	font-family: var(--mzk-font);
 	font-weight: 300;
 	font-size: clamp(14px, calc(14px + (18 - 14) * (100vw - 375px) / 1525), 18px);
-	line-height: 1.65;
+	line-height: 1.7;
+	text-align: left;
 }
 
-.mzk-calendar *,
-.mzk-manage *,
-.mzk-classes * {
+/* ===========================================================================
+   2. Reset — neutralise what the theme applies globally
+   ======================================================================== */
+
+.mzk-root *,
+.mzk-root *::before,
+.mzk-root *::after {
 	box-sizing: border-box;
 }
 
-/* Defensive resets: the studio's theme styles lists, buttons and fields
-   globally, so neutralise those inside the plugin's own markup. */
-
-.mzk-calendar ul,
-.mzk-manage ul,
-.mzk-classes ul {
+.mzk-root.mzk-root ul,
+.mzk-root.mzk-root ol {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
-.mzk-calendar li,
-.mzk-manage li,
-.mzk-classes li {
+.mzk-root.mzk-root li {
 	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
-.mzk-calendar select,
-.mzk-calendar input,
-.mzk-calendar textarea,
-.mzk-manage select,
-.mzk-manage input,
-.mzk-manage textarea {
-	max-width: 100%;
-	box-shadow: none;
-	text-transform: none;
+.mzk-root.mzk-root p {
+	margin: 0 0 1em;
 }
 
-/* Astra underlines every link inside .entry-content and on WooCommerce pages:
-     .ast-single-post .entry-content a, … .woocommerce-js … { text-decoration: underline }
-   That rule outranks the button styles, so buttons and card links came out
-   underlined in the theme's blue. Buttons and list rows carry their own
-   affordance (fill, border, hover), so the underline is removed here and kept
-   only as a hover cue on plain text links. */
+.mzk-root.mzk-root p:last-child {
+	margin-bottom: 0;
+}
 
-.mzk-calendar a,
-.mzk-manage a,
-.mzk-classes a {
-	text-decoration: none !important;
+/* Links: the theme underlines everything inside post content. Buttons and rows
+   have their own affordance, so the underline is a hover cue only. */
+.mzk-root.mzk-root a {
+	text-decoration: none;
 	text-decoration-color: currentColor;
-}
-
-.mzk-calendar a:not([class]):hover,
-.mzk-manage a:not([class]):hover,
-.mzk-classes a:not([class]):hover {
-	text-decoration: underline !important;
 	text-underline-offset: 3px;
+	color: var(--mzk-accent);
+	transition: color var(--mzk-fast) var(--mzk-ease);
 }
 
-/* Headings — uppercase with the short rule the site uses under section titles */
+.mzk-root.mzk-root a:hover,
+.mzk-root.mzk-root a:focus-visible {
+	color: var(--mzk-primary);
+}
 
-.mzk-calendar h3,
-.mzk-calendar h4,
-.mzk-manage h3,
-.mzk-manage h4,
-.mzk-classes h3,
-.mzk-classes h4 {
+.mzk-root.mzk-root a:not([class]):hover {
+	text-decoration: underline;
+}
+
+.mzk-root.mzk-root h1,
+.mzk-root.mzk-root h2,
+.mzk-root.mzk-root h3,
+.mzk-root.mzk-root h4,
+.mzk-root.mzk-root h5 {
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 2px;
-	color: var(--mzk-text);
 	line-height: 1.35;
+	color: var(--mzk-text);
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
-.mzk-panel__title,
-.mzk-list__date,
-.mzk-alternates h4 {
-	position: relative;
-	padding-bottom: 12px;
+.mzk-root.mzk-root button,
+.mzk-root.mzk-root input,
+.mzk-root.mzk-root select,
+.mzk-root.mzk-root textarea {
+	font-family: var(--mzk-font);
+	font-size: inherit;
+	line-height: 1.4;
+	max-width: 100%;
+	margin: 0;
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
 }
 
-.mzk-panel__title::after,
-.mzk-list__date::after,
-.mzk-alternates h4::after {
-	content: "";
-	position: absolute;
-	left: 0;
-	bottom: 0;
-	width: 25px;
-	border-top: 1px solid var(--mzk-rule);
+.mzk-root.mzk-root table {
+	border-collapse: collapse;
+	width: 100%;
 }
 
-.mzk-loading {
-	padding: 32px 0;
+/* One focus style everywhere, visible on any background. */
+.mzk-root :focus-visible {
+	outline: 2px solid var(--mzk-primary);
+	outline-offset: 2px;
+}
+
+/* Honour the system preference. Everything below degrades to no motion. */
+@media (prefers-reduced-motion: reduce) {
+	.mzk-root,
+	.mzk-root *,
+	.mzk-root *::before,
+	.mzk-root *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ===========================================================================
+   3. Buttons
+   ======================================================================== */
+
+.mzk-root.mzk-root .mzk-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	-webkit-appearance: none;
+	appearance: none;
+	padding: 14px 28px;
+	border: 1px solid transparent;
+	border-radius: 0;
+	font-family: var(--mzk-font);
+	font-size: 0.72em;
+	font-weight: 700;
+	line-height: 1.4;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color var(--mzk-fast) var(--mzk-ease),
+		border-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
+}
+
+/* The theme forces button colours with !important, so these must match it. */
+.mzk-root.mzk-root .mzk-btn--primary {
+	background-color: var(--mzk-accent) !important;
+	border-color: var(--mzk-accent) !important;
+	color: #fff !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--primary:hover,
+.mzk-root.mzk-root .mzk-btn--primary:focus-visible {
+	background-color: var(--mzk-primary) !important;
+	border-color: var(--mzk-primary) !important;
+	box-shadow: 0 6px 18px rgba(45, 87, 120, 0.24);
+	transform: translateY(-1px);
+}
+
+.mzk-root.mzk-root .mzk-btn--ghost {
+	background-color: transparent !important;
+	border-color: var(--mzk-primary) !important;
+	color: var(--mzk-primary) !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--ghost:hover,
+.mzk-root.mzk-root .mzk-btn--ghost:focus-visible {
+	background-color: var(--mzk-primary) !important;
+	color: #fff !important;
+	transform: translateY(-1px);
+}
+
+.mzk-root.mzk-root .mzk-btn:active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+.mzk-root.mzk-root .mzk-btn[disabled] {
+	opacity: 0.55;
+	cursor: default;
+	transform: none;
+	box-shadow: none;
+}
+
+/* Small inline control: the −/+ and Hide/Show pills. */
+.mzk-root.mzk-root .mzk-mini {
+	display: inline-block;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 4px 10px;
+	font-size: 0.72em;
+	line-height: 1.5;
+	color: var(--mzk-text);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease),
+		background-color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-mini:hover {
+	border-color: var(--mzk-accent);
+	color: var(--mzk-accent);
+	background: var(--mzk-surface);
+}
+
+/* ===========================================================================
+   4. Fields
+   ======================================================================== */
+
+.mzk-root .mzk-form {
+	display: grid;
+	gap: 16px;
+	margin-top: 18px;
+}
+
+.mzk-root .mzk-form--grid {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	align-items: end;
+}
+
+.mzk-root .mzk-form--grid .mzk-form__actions {
+	grid-column: 1 / -1;
+}
+
+.mzk-root .mzk-field {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+}
+
+.mzk-root .mzk-field__label {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.7em;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 	color: var(--mzk-muted);
-	text-align: center;
-	letter-spacing: 0.02em;
 }
 
-/* Filter ------------------------------------------------------------------ */
+.mzk-root.mzk-root .mzk-input {
+	width: 100%;
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid var(--mzk-border);
+	border-radius: 0;
+	background: transparent;
+	color: var(--mzk-text);
+	font-weight: 300;
+	font-size: 0.9em;
+	min-height: 42px;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
+}
 
-.mzk-filter {
+.mzk-root.mzk-root .mzk-input:focus {
+	outline: none;
+	border-bottom-color: var(--mzk-accent);
+	box-shadow: 0 1px 0 0 var(--mzk-accent);
+}
+
+.mzk-root.mzk-root textarea.mzk-input {
+	min-height: 76px;
+	padding-top: 10px;
+	resize: vertical;
+}
+
+.mzk-root .mzk-form__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-top: 4px;
+}
+
+.mzk-root .mzk-honey {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+}
+
+/* ===========================================================================
+   5. Notices, loading, small type
+   ======================================================================== */
+
+.mzk-root .mzk-notice {
+	padding: 12px 14px;
+	border-left: 3px solid transparent;
+	border-radius: 0;
+	font-size: 0.82em;
+	margin: 12px 0 0;
+	animation: mzk-fade-in var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root .mzk-notice--error {
+	background: var(--mzk-alert-bg);
+	border-left-color: var(--mzk-alert);
+	color: var(--mzk-alert);
+}
+
+.mzk-root .mzk-notice--info {
+	background: var(--mzk-surface);
+	border-left-color: var(--mzk-rule);
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-note {
+	color: var(--mzk-muted);
+	font-size: 0.85em;
+}
+
+.mzk-root .mzk-loading {
+	padding: 34px 0;
+	text-align: center;
+	color: var(--mzk-muted);
+	letter-spacing: 0.02em;
+	animation: mzk-pulse 1.4s var(--mzk-ease) infinite;
+}
+
+.mzk-root .mzk-badge {
+	display: inline-block;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 2px 12px;
+	font-family: var(--mzk-font-head);
+	font-size: 0.72em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: var(--mzk-text);
+	white-space: nowrap;
+}
+
+@keyframes mzk-fade-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes mzk-pulse {
+	0%, 100% { opacity: 1; }
+	50%      { opacity: 0.55; }
+}
+
+@keyframes mzk-rise {
+	from { opacity: 0; transform: translateY(8px); }
+	to   { opacity: 1; transform: none; }
+}
+
+/* ===========================================================================
+   6. Calendar
+   ======================================================================== */
+
+.mzk-root .mzk-filter {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	margin-bottom: 24px;
 	flex-wrap: wrap;
+	margin-bottom: 24px;
 }
 
-.mzk-filter__label {
+.mzk-root .mzk-filter__label {
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
@@ -147,20 +437,22 @@
 	font-size: 0.8em;
 }
 
-.mzk-filter__select {
+.mzk-root.mzk-root .mzk-filter__select {
 	padding: 10px 14px;
 	border: 1px solid var(--mzk-border);
 	border-radius: 0;
 	background: var(--mzk-bg);
 	color: inherit;
-	font-family: var(--mzk-font);
 	font-size: 0.9em;
 	min-height: 44px;
+	transition: border-color var(--mzk-fast) var(--mzk-ease);
 }
 
-/* Layout ------------------------------------------------------------------ */
+.mzk-root.mzk-root .mzk-filter__select:hover {
+	border-color: var(--mzk-accent);
+}
 
-.mzk-layout {
+.mzk-root .mzk-layout {
 	display: grid;
 	grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
 	gap: 32px;
@@ -168,49 +460,42 @@
 }
 
 @media (max-width: 900px) {
-	.mzk-layout {
+	.mzk-root .mzk-layout {
 		grid-template-columns: 1fr;
 		gap: 24px;
 	}
 }
 
-.mzk-months {
+.mzk-root .mzk-months {
 	display: grid;
 	gap: 32px;
 	max-height: 760px;
 	overflow-y: auto;
 	padding-right: 6px;
+	scroll-behavior: smooth;
 }
 
 @media (max-width: 900px) {
-	.mzk-months {
+	.mzk-root .mzk-months {
 		max-height: none;
 		overflow: visible;
 		padding-right: 0;
 	}
 }
 
-.mzk-month__head {
+.mzk-root .mzk-month__head {
 	position: sticky;
 	top: 0;
+	z-index: 1;
 	background: var(--mzk-bg);
 	padding: 2px 0 10px;
-	z-index: 1;
 }
 
-.mzk-month__title {
-	margin: 0;
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 2px;
+.mzk-root .mzk-month__title {
 	font-size: 0.95em;
-	color: var(--mzk-text);
 }
 
-/* Grid -------------------------------------------------------------------- */
-
-.mzk-grid {
+.mzk-root .mzk-grid {
 	display: grid;
 	grid-template-columns: repeat(7, 1fr);
 	gap: 1px;
@@ -218,19 +503,19 @@
 	border: 1px solid var(--mzk-border);
 }
 
-.mzk-grid__dow {
-	text-align: center;
+.mzk-root .mzk-grid__dow {
+	padding: 8px 0;
+	background: var(--mzk-surface);
+	color: var(--mzk-muted);
 	font-family: var(--mzk-font-head);
 	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 1.5px;
-	color: var(--mzk-muted);
-	background: var(--mzk-surface);
-	padding: 8px 0;
+	text-align: center;
 }
 
-.mzk-day {
+.mzk-root .mzk-day {
 	position: relative;
 	aspect-ratio: 1 / 1;
 	min-height: 44px;
@@ -240,22 +525,22 @@
 	justify-content: center;
 	gap: 4px;
 	background: var(--mzk-bg);
-	border-radius: 0;
 	cursor: pointer;
-	transition: background 0.18s ease, color 0.18s ease;
+	transition:
+		background-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-day--empty {
-	background: var(--mzk-bg);
+.mzk-root .mzk-day--empty {
 	cursor: default;
 }
 
-.mzk-day--disabled {
+.mzk-root .mzk-day--disabled {
 	color: #b6bdc4;
 	cursor: default;
 }
 
-.mzk-day--blackout {
+.mzk-root .mzk-day--blackout {
 	background: repeating-linear-gradient(
 		135deg,
 		var(--mzk-bg),
@@ -266,422 +551,174 @@
 	color: #a8b1b9;
 }
 
-.mzk-day--open,
-.mzk-day--full {
+.mzk-root .mzk-day--open,
+.mzk-root .mzk-day--full {
 	font-weight: 400;
 }
 
-.mzk-day--open:hover,
-.mzk-day--full:hover {
+.mzk-root .mzk-day--open:hover,
+.mzk-root .mzk-day--full:hover {
 	background: var(--mzk-surface);
 }
 
-.mzk-day--full {
+.mzk-root .mzk-day--full {
 	color: var(--mzk-muted);
 }
 
-.mzk-day.is-selected {
+.mzk-root .mzk-day.is-selected {
 	background: var(--mzk-accent);
 	color: #fff;
 }
 
-.mzk-day.is-selected .mzk-dot {
+.mzk-root .mzk-day.is-selected .mzk-dot {
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
-.mzk-day:focus-visible {
-	outline: 2px solid var(--mzk-primary);
-	outline-offset: -2px;
-}
-
-.mzk-day__num {
+.mzk-root .mzk-day__num {
 	font-size: 0.85em;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
 }
 
-.mzk-day__dots {
+.mzk-root .mzk-day__dots {
 	display: flex;
 	gap: 3px;
 }
 
-.mzk-dot {
+.mzk-root .mzk-dot {
+	display: block;
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	display: block;
+	transition: box-shadow var(--mzk-fast) var(--mzk-ease);
 }
 
-/* Panel ------------------------------------------------------------------- */
+/* ===========================================================================
+   7. Session lists
+   ======================================================================== */
 
-.mzk-panel {
+.mzk-root .mzk-panel {
 	background: var(--mzk-surface);
 	border: 1px solid var(--mzk-border);
-	border-radius: 0;
 	padding: 24px;
 }
 
-.mzk-panel__title {
-	margin: 0 0 18px;
+.mzk-root .mzk-panel__title,
+.mzk-root .mzk-list__date,
+.mzk-root .mzk-alternates h4 {
+	position: relative;
+	padding-bottom: 12px;
+	margin-bottom: 18px;
 	font-size: 0.9em;
 }
 
-.mzk-sessions {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+.mzk-root .mzk-panel__title::after,
+.mzk-root .mzk-list__date::after,
+.mzk-root .mzk-alternates h4::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 25px;
+	border-top: 1px solid var(--mzk-rule);
+}
+
+.mzk-root .mzk-sessions {
 	display: grid;
 	gap: 12px;
 }
 
-.mzk-session {
+.mzk-root .mzk-session {
 	position: relative;
-	border: 1px solid var(--mzk-border);
-	/* --mzk-class is set per card from the class colour; it never reaches the
-	   buttons, which stay brand teal. */
-	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
-	border-radius: 0;
 	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
 	padding: 16px 18px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-session--full {
+.mzk-root .mzk-session:hover {
+	box-shadow: var(--mzk-shadow);
+}
+
+/* A gentle stagger so a day's sessions arrive in sequence, not all at once. */
+.mzk-root .mzk-session:nth-child(2) { animation-delay: 40ms; }
+.mzk-root .mzk-session:nth-child(3) { animation-delay: 80ms; }
+.mzk-root .mzk-session:nth-child(4) { animation-delay: 120ms; }
+.mzk-root .mzk-session:nth-child(n+5) { animation-delay: 160ms; }
+
+.mzk-root .mzk-session--full {
 	color: var(--mzk-muted);
 }
 
-.mzk-session--booked {
+.mzk-root .mzk-session--booked {
 	border-left-color: var(--mzk-primary);
 }
 
-.mzk-session__head {
+.mzk-root .mzk-session__head {
 	display: flex;
 	justify-content: space-between;
+	align-items: baseline;
 	gap: 10px;
 	flex-wrap: wrap;
-	align-items: baseline;
 	margin-bottom: 6px;
 }
 
-.mzk-session__class {
+.mzk-root .mzk-session__class {
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 1.5px;
 	font-size: 0.82em;
-	color: var(--mzk-text);
 }
 
-.mzk-session__time {
-	font-variant-numeric: tabular-nums;
+.mzk-root .mzk-session__time {
 	font-size: 0.9em;
+	font-variant-numeric: tabular-nums;
 }
 
-.mzk-session__meta {
+.mzk-root .mzk-session__meta {
 	display: flex;
 	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 14px;
 	font-size: 0.78em;
 	color: var(--mzk-muted);
-	margin-bottom: 14px;
-	flex-wrap: wrap;
 	letter-spacing: 0.02em;
 }
 
-.mzk-session__seats.is-full {
+.mzk-root .mzk-session__seats.is-full {
 	color: var(--mzk-alert);
 }
 
-/* Buttons — square, solid teal, matching the site's Elementor button style.
-   Selectors are scoped to the plugin root so Astra/ElementsKit button rules
-   cannot override them.
-   The `!important` flags on background/border are deliberate and minimal: the
-   Astra customizer ships
-     .menu-toggle, button, .ast-button, ... { background-color: #3F827A !important;
-                                              border-color: #3F827A !important }
-   which would otherwise paint the secondary buttons solid teal with navy text. */
-
-.mzk-calendar .mzk-btn,
-.mzk-manage .mzk-btn,
-.mzk-classes .mzk-btn {
-	display: inline-block;
-	-webkit-appearance: none;
-	appearance: none;
-	padding: 12px 24px;
-	border-radius: 0;
-	border: 1px solid transparent;
-	box-shadow: none;
-	font-family: var(--mzk-font);
-	font-size: 0.8em;
-	font-weight: 300;
-	line-height: 1.4;
-	letter-spacing: normal;
-	text-transform: none;
-	text-decoration: none;
-	cursor: pointer;
-	transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-}
-
-/* The site uses three button tiers: page CTA (18/40, 700, uppercase, 2px),
-   WooCommerce add-to-cart (10/20, 500) and utility (12/24, 300). Primary
-   actions follow the page-CTA tier at a padding that fits inside a session
-   card; secondary actions stay on the quieter utility tier. */
-
-.mzk-calendar .mzk-btn--primary,
-.mzk-manage .mzk-btn--primary,
-.mzk-classes .mzk-btn--primary {
-	background-color: var(--mzk-accent) !important;
-	border-color: var(--mzk-accent) !important;
-	color: #fff;
-	padding: 14px 28px;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 2px;
-	font-size: 0.72em;
-}
-
-.mzk-calendar .mzk-btn--primary:hover,
-.mzk-calendar .mzk-btn--primary:focus,
-.mzk-manage .mzk-btn--primary:hover,
-.mzk-manage .mzk-btn--primary:focus {
-	background-color: var(--mzk-primary) !important;
-	border-color: var(--mzk-primary) !important;
-	color: #fff;
-}
-
-.mzk-calendar .mzk-btn--primary[disabled],
-.mzk-manage .mzk-btn--primary[disabled] {
-	opacity: 0.55;
-	cursor: default;
-}
-
-.mzk-calendar .mzk-btn--ghost,
-.mzk-manage .mzk-btn--ghost,
-.mzk-classes .mzk-btn--ghost {
-	background-color: transparent !important;
-	border-color: var(--mzk-primary) !important;
-	color: var(--mzk-primary);
-}
-
-.mzk-calendar .mzk-btn--ghost:hover,
-.mzk-calendar .mzk-btn--ghost:focus,
-.mzk-manage .mzk-btn--ghost:hover,
-.mzk-manage .mzk-btn--ghost:focus {
-	background-color: var(--mzk-primary) !important;
-	border-color: var(--mzk-primary) !important;
-	color: #fff;
-}
-
-/* Form — underline fields, as used by the studio's enquiry form ------------ */
-
-.mzk-form {
-	margin-top: 18px;
-	display: grid;
-	gap: 16px;
-}
-
-.mzk-field {
-	display: grid;
-	gap: 2px;
-}
-
-.mzk-field__label {
-	font-size: 0.75em;
-	letter-spacing: 0.04em;
-	color: var(--mzk-muted);
-	text-transform: uppercase;
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-}
-
-.mzk-input {
-	width: 100%;
-	padding: 8px 0;
-	border: 0;
-	border-bottom: 1px solid var(--mzk-border);
-	border-radius: 0;
-	background: transparent;
-	color: var(--mzk-text);
-	font-family: var(--mzk-font);
-	font-size: 0.9em;
-	font-weight: 300;
-	min-height: 40px;
-}
-
-.mzk-input:focus {
-	outline: none;
-	border-bottom-color: var(--mzk-accent);
-	box-shadow: 0 1px 0 0 var(--mzk-accent);
-}
-
-textarea.mzk-input {
-	min-height: 72px;
-	resize: vertical;
-	padding-top: 10px;
-}
-
-.mzk-honey {
-	position: absolute !important;
-	left: -9999px !important;
-	width: 1px;
-	height: 1px;
-	opacity: 0;
-}
-
-.mzk-form__actions {
+.mzk-root .mzk-session__tools {
 	display: flex;
-	gap: 10px;
+	gap: 6px;
 	flex-wrap: wrap;
-	margin-top: 4px;
+	margin-top: 12px;
 }
 
-/* Notices ----------------------------------------------------------------- */
-
-.mzk-notice {
-	padding: 12px 14px;
-	border-radius: 0;
-	font-size: 0.82em;
-	margin: 12px 0 0;
-	border-left: 3px solid transparent;
-}
-
-.mzk-notice--error {
-	background: #fbf1f1;
-	border-left-color: var(--mzk-alert);
-	color: var(--mzk-alert);
-}
-
-.mzk-notice--info {
-	background: var(--mzk-surface);
-	border-left-color: var(--mzk-rule);
-	color: var(--mzk-muted);
-}
-
-.mzk-success h4 {
-	margin: 0 0 8px;
+.mzk-root .mzk-success h4 {
+	margin-bottom: 8px;
 	font-size: 0.85em;
 	color: var(--mzk-accent);
 }
 
-.mzk-success p {
-	margin: 0 0 14px;
-	font-size: 0.9em;
+.mzk-root .mzk-list__day {
+	margin-bottom: 32px;
 }
 
-/* Manager ----------------------------------------------------------------- */
-
-.mzk-booking {
-	border: 1px solid var(--mzk-border);
-	border-top: 3px solid var(--mzk-accent);
-	border-radius: 0;
-	padding: 24px;
-	margin-bottom: 20px;
-	background: var(--mzk-bg);
-}
-
-.mzk-booking--cancelled {
-	border-top-color: var(--mzk-rule);
-	color: var(--mzk-muted);
-}
-
-.mzk-booking__title {
-	margin: 0 0 10px;
-	font-size: 0.95em;
-}
-
-.mzk-booking__meta {
-	display: flex;
-	gap: 18px;
-	flex-wrap: wrap;
-	align-items: center;
-	color: var(--mzk-muted);
-	font-size: 0.85em;
-	margin-bottom: 18px;
-}
-
-.mzk-badge {
-	background: var(--mzk-surface);
-	border: 1px solid var(--mzk-border);
-	border-radius: 0;
-	padding: 2px 12px;
-	font-family: var(--mzk-font-head);
-	font-size: 0.75em;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 1.5px;
-	color: var(--mzk-text);
-}
-
-.mzk-booking__actions {
-	display: flex;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-
-.mzk-alternates {
-	margin-top: 22px;
-	border-top: 1px solid var(--mzk-border);
-	padding-top: 20px;
-}
-
-.mzk-alternates h4 {
-	margin: 0 0 16px;
-	font-size: 0.82em;
-}
-
-/* Course package progress ------------------------------------------------- */
-
-.mzk-progress {
-	height: 6px;
-	background: var(--mzk-surface);
-	border: 1px solid var(--mzk-border);
-	margin: 0 0 18px;
-	max-width: 260px;
-}
-
-.mzk-progress span {
-	display: block;
-	height: 100%;
-	background: var(--mzk-accent);
-}
-
-/* Product page session picker --------------------------------------------- */
-
-.mzk-product-picker {
-	margin: 0 0 20px;
-}
-
-.mzk-product-picker .mzk-input {
-	border: 1px solid var(--mzk-border);
-	padding: 10px 12px;
-	background: var(--mzk-bg);
-}
-
-.mzk-product-picker .mzk-note {
-	margin: 8px 0 0;
-	font-size: 0.78em;
-}
-
-/* Classes page ------------------------------------------------------------- */
+/* ===========================================================================
+   8. Classes page
+   ======================================================================== */
 
 .mzk-classes {
-	--mzk-primary: var(--e-global-color-primary, #2d5778);
-	--mzk-accent: var(--e-global-color-secondary, #3f827a);
-	--mzk-text: var(--e-global-color-text, #162a3c);
-	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
-	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
-	--mzk-bg: #ffffff;
-	--mzk-border: #e7e7e7;
-	--mzk-rule: #bcbcbc;
-	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
-	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
-
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 	gap: 32px;
-	color: var(--mzk-text);
-	font-family: var(--mzk-font);
-	font-weight: 300;
-	font-size: clamp(14px, calc(14px + (18 - 14) * (100vw - 375px) / 1525), 18px);
-	line-height: 1.7;
 }
 
 @media (min-width: 900px) {
@@ -695,81 +732,78 @@ textarea.mzk-input {
 	max-width: 1040px;
 }
 
-/* Card -------------------------------------------------------------------- */
-
-.mzk-class {
+.mzk-root .mzk-class {
 	display: flex;
 	flex-direction: column;
 	background: var(--mzk-bg);
 	border: 1px solid var(--mzk-border);
-	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-slow) var(--mzk-ease),
+		box-shadow var(--mzk-slow) var(--mzk-ease),
+		transform var(--mzk-slow) var(--mzk-ease);
 }
 
-.mzk-class::before {
+.mzk-classes .mzk-class:nth-child(2) { animation-delay: 60ms; }
+.mzk-classes .mzk-class:nth-child(3) { animation-delay: 120ms; }
+.mzk-classes .mzk-class:nth-child(n+4) { animation-delay: 180ms; }
+
+.mzk-root .mzk-class::before {
 	content: "";
 	display: block;
 	height: 3px;
 	background: var(--mzk-class, var(--mzk-accent));
 }
 
-.mzk-class:hover {
-	border-color: #d8d2ce;
-	box-shadow: 0 10px 28px rgba(22, 42, 60, 0.08);
-	transform: translateY(-2px);
+.mzk-root .mzk-class:hover {
+	border-color: var(--mzk-border-strong);
+	box-shadow: var(--mzk-shadow);
+	transform: translateY(-3px);
 }
 
-.mzk-class__media {
+.mzk-root .mzk-class__media {
 	overflow: hidden;
 	background: var(--mzk-surface);
 	aspect-ratio: 4 / 3;
 }
 
-.mzk-class__media img {
+.mzk-root .mzk-class__media img {
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	transition: transform 0.5s ease;
+	transition: transform 0.6s var(--mzk-ease);
 }
 
-.mzk-class:hover .mzk-class__media img {
+.mzk-root .mzk-class:hover .mzk-class__media img {
 	transform: scale(1.04);
 }
 
-.mzk-class__body {
-	padding: 28px 26px 26px;
+.mzk-root .mzk-class__body {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
+	padding: 28px 26px 26px;
 }
 
-.mzk-class__name {
-	margin: 0 0 12px;
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 2px;
+.mzk-root .mzk-class__name {
+	margin-bottom: 12px;
 	font-size: 0.85em;
 	line-height: 1.4;
-	color: var(--mzk-text);
 }
 
-.mzk-class__summary {
-	margin: 0 0 22px;
+.mzk-root .mzk-class__summary {
+	margin-bottom: 22px;
 	font-size: 0.9em;
-	color: #4a5560;
+	color: var(--mzk-soft);
 }
 
-/* Facts ------------------------------------------------------------------- */
-
-.mzk-class__facts {
-	margin: 0 0 22px;
-	padding: 0;
-	list-style: none;
+.mzk-root .mzk-class__facts {
+	margin-bottom: 22px;
 	border-top: 1px solid var(--mzk-border);
 }
 
-.mzk-class__facts li {
+.mzk-root .mzk-class__facts li {
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
@@ -779,7 +813,7 @@ textarea.mzk-input {
 	font-size: 0.78em;
 }
 
-.mzk-class__facts > li > span:first-child {
+.mzk-root .mzk-class__facts > li > span:first-child {
 	color: var(--mzk-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -787,15 +821,13 @@ textarea.mzk-input {
 	white-space: nowrap;
 }
 
-.mzk-class__facts strong {
+.mzk-root .mzk-class__facts strong {
 	font-weight: 600;
 	text-align: right;
 }
 
-/* Dates ------------------------------------------------------------------- */
-
-.mzk-class__next {
-	margin: 0 0 10px;
+.mzk-root .mzk-class__next {
+	margin-bottom: 10px;
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
@@ -804,13 +836,11 @@ textarea.mzk-input {
 	color: var(--mzk-muted);
 }
 
-.mzk-class__dates {
-	margin: 0 0 24px;
-	padding: 0;
-	list-style: none;
+.mzk-root .mzk-class__dates {
+	margin-bottom: 24px;
 }
 
-.mzk-class__dates li {
+.mzk-root .mzk-class__dates li {
 	display: flex;
 	gap: 12px;
 	align-items: baseline;
@@ -818,27 +848,26 @@ textarea.mzk-input {
 	padding: 9px 0;
 	border-bottom: 1px dotted var(--mzk-border);
 	font-size: 0.8em;
+	transition: background-color var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-class__dates li:last-child {
+.mzk-root .mzk-class__dates li:last-child {
 	border-bottom: 0;
 }
 
-.mzk-class__time {
+.mzk-root .mzk-class__time {
 	color: var(--mzk-muted);
 	font-variant-numeric: tabular-nums;
 }
 
-.mzk-class__seats {
+.mzk-root .mzk-class__seats {
 	margin-left: auto;
 	color: var(--mzk-accent);
 	font-size: 0.94em;
 	white-space: nowrap;
 }
 
-/* Actions ----------------------------------------------------------------- */
-
-.mzk-class__actions {
+.mzk-root .mzk-class__actions {
 	display: flex;
 	gap: 12px;
 	align-items: center;
@@ -847,115 +876,98 @@ textarea.mzk-input {
 	padding-top: 6px;
 }
 
-.mzk-classes .mzk-btn--ghost {
+/* "More details" reads as a quiet link beside the solid call to action. */
+.mzk-root.mzk-root .mzk-classes .mzk-btn--ghost {
 	border-color: transparent !important;
 	padding-left: 4px;
 	padding-right: 4px;
 }
 
-.mzk-classes .mzk-btn--ghost:hover,
-.mzk-classes .mzk-btn--ghost:focus {
+.mzk-root.mzk-root .mzk-classes .mzk-btn--ghost:hover {
 	background-color: transparent !important;
-	color: var(--mzk-accent);
+	color: var(--mzk-accent) !important;
+	transform: none;
 }
 
-.mzk-classes .mzk-note,
-.mzk-classes .mzk-notice {
-	font-size: 0.8em;
-}
+/* Detail: full-width photo, everything underneath. */
 
-.mzk-classes .mzk-note {
-	color: var(--mzk-muted);
-	margin: 0 0 22px;
-}
-
-/* Detail view ------------------------------------------------------------- */
-
-/* Detail: one column — a full-width photo, then everything underneath. */
-
-.mzk-class--detail::before {
+.mzk-root .mzk-class--detail::before {
 	height: 4px;
 }
 
-.mzk-class--detail .mzk-class__media {
+.mzk-root .mzk-class--detail .mzk-class__media {
 	aspect-ratio: 21 / 9;
 }
 
 @media (max-width: 700px) {
-	.mzk-class--detail .mzk-class__media {
+	.mzk-root .mzk-class--detail .mzk-class__media {
 		aspect-ratio: 4 / 3;
 	}
 }
 
-.mzk-class--detail .mzk-class__body {
+.mzk-root .mzk-class--detail:hover {
+	transform: none;
+	box-shadow: none;
+	border-color: var(--mzk-border);
+}
+
+.mzk-root .mzk-class--detail .mzk-class__body {
 	padding: 36px 32px 32px;
 }
 
 @media (min-width: 900px) {
-	.mzk-class--detail .mzk-class__body {
+	.mzk-root .mzk-class--detail .mzk-class__body {
 		padding: 44px 48px 40px;
 	}
 }
 
-.mzk-class--detail .mzk-class__name {
-	font-size: 1.15em;
+.mzk-root .mzk-class--detail .mzk-class__name {
 	margin-bottom: 14px;
+	font-size: 1.15em;
 }
 
-.mzk-class--detail .mzk-class__summary {
+.mzk-root .mzk-class--detail .mzk-class__summary {
+	max-width: 68ch;
 	font-size: 1.02em;
 	color: var(--mzk-text);
-	max-width: 68ch;
 }
 
-.mzk-class--detail .mzk-class__desc {
+.mzk-root .mzk-class__desc {
 	max-width: 68ch;
+	margin-bottom: 24px;
+	font-size: 0.9em;
+	color: var(--mzk-soft);
 }
 
-/* The call to action sits with the content, not pinned to the bottom of a
-   flex column, so it never collides with the dates heading below it. */
-
-.mzk-class--detail .mzk-class__actions {
+.mzk-root .mzk-class--detail .mzk-class__actions {
 	margin-top: 0;
 	margin-bottom: 8px;
 	padding-top: 0;
 }
 
-.mzk-class--detail .mzk-notice {
-	margin-bottom: 20px;
-}
-
-.mzk-class__desc {
-	font-size: 0.9em;
-	margin: 0 0 24px;
-	color: #4a5560;
-}
-
-.mzk-class__desc p {
-	margin: 0 0 14px;
-}
-
-.mzk-class--detail .mzk-dash__title {
+.mzk-root .mzk-class--detail .mzk-dash__title {
 	margin: 34px 0 16px;
 	padding-top: 26px;
 	border-top: 1px solid var(--mzk-border);
 	font-size: 0.75em;
 }
 
-.mzk-class__dates--full {
+.mzk-root .mzk-class__dates--full {
 	margin-bottom: 0;
 }
 
-.mzk-class__dates--full li {
+.mzk-root .mzk-class__dates--full li {
 	padding: 12px 0;
 	border-bottom: 1px solid var(--mzk-border);
 }
 
-.mzk-class__dates--full .mzk-mini {
-	margin-left: 4px;
+.mzk-root .mzk-class__dates--full li:hover {
+	background: var(--mzk-surface);
 }
 
-/* Booking dialog ----------------------------------------------------------- */
+/* ===========================================================================
+   9. Booking dialog
+   ======================================================================== */
 
 body.mzk-modal-open {
 	overflow: hidden;
@@ -965,50 +977,37 @@ body.mzk-modal-open {
 	position: fixed;
 	inset: 0;
 	z-index: 100000;
-	background: rgba(22, 42, 60, 0.55);
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
 	padding: 5vh 16px;
 	overflow-y: auto;
-	-webkit-backdrop-filter: blur(2px);
-	backdrop-filter: blur(2px);
+	background: rgba(22, 42, 60, 0.55);
+	-webkit-backdrop-filter: blur(3px);
+	backdrop-filter: blur(3px);
+	animation: mzk-fade var(--mzk-fast, 0.16s) ease-out;
+}
+
+@keyframes mzk-fade {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@keyframes mzk-modal-in {
+	from { opacity: 0; transform: translateY(-10px) scale(0.985); }
+	to   { opacity: 1; transform: none; }
 }
 
 .mzk-modal__box {
-	--mzk-primary: var(--e-global-color-primary, #2d5778);
-	--mzk-accent: var(--e-global-color-secondary, #3f827a);
-	--mzk-text: var(--e-global-color-text, #162a3c);
-	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
-	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
-	--mzk-bg: #ffffff;
-	--mzk-border: #e7e7e7;
-	--mzk-alert: #9d3b3b;
-	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
-	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
-
 	width: 100%;
 	max-width: 520px;
 	background: var(--mzk-bg);
 	border-top: 3px solid var(--mzk-accent);
-	box-shadow: 0 20px 60px rgba(22, 42, 60, 0.28);
-	font-family: var(--mzk-font);
-	font-weight: 300;
-	color: var(--mzk-text);
-	line-height: 1.6;
-	animation: mzk-modal-in 0.18s ease-out;
+	box-shadow: var(--mzk-shadow-lg);
+	animation: mzk-modal-in var(--mzk-slow) var(--mzk-ease);
 }
 
-@keyframes mzk-modal-in {
-	from { opacity: 0; transform: translateY(-8px); }
-	to   { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.mzk-modal__box { animation: none; }
-}
-
-.mzk-modal__head {
+.mzk-root .mzk-modal__head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1017,39 +1016,38 @@ body.mzk-modal-open {
 	border-bottom: 1px solid var(--mzk-border);
 }
 
-.mzk-modal__title {
-	margin: 0;
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 2px;
+.mzk-root .mzk-modal__title {
 	font-size: 0.82em;
-	color: var(--mzk-text);
 }
 
-.mzk-modal__close {
+.mzk-root.mzk-root .mzk-modal__close {
 	appearance: none;
 	background: none !important;
 	border: 0 !important;
+	padding: 0 4px;
 	font-size: 26px;
 	line-height: 1;
-	padding: 0 4px;
-	cursor: pointer;
 	color: var(--mzk-muted);
+	cursor: pointer;
+	transition:
+		color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-modal__close:hover {
+.mzk-root.mzk-root .mzk-modal__close:hover {
 	color: var(--mzk-text);
+	transform: rotate(90deg);
 }
 
-.mzk-modal__body {
+.mzk-root .mzk-modal__body {
 	padding: 22px 24px 26px;
 	max-height: 70vh;
 	overflow-y: auto;
+	scroll-behavior: smooth;
 }
 
-.mzk-modal__step {
-	margin: 0 0 14px;
+.mzk-root .mzk-modal__step {
+	margin-bottom: 14px;
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	text-transform: uppercase;
@@ -1058,54 +1056,59 @@ body.mzk-modal-open {
 	color: var(--mzk-muted);
 }
 
-.mzk-modal__dates {
+.mzk-root .mzk-modal__dates {
 	display: grid;
 	gap: 8px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
 }
 
-.mzk-slot {
+.mzk-root.mzk-root .mzk-slot {
 	display: grid;
 	grid-template-columns: 1fr auto;
 	gap: 2px 12px;
 	width: 100%;
+	padding: 12px 14px;
 	text-align: left;
 	appearance: none;
 	background: var(--mzk-bg) !important;
 	border: 1px solid var(--mzk-border) !important;
 	border-radius: 0;
-	padding: 12px 14px;
-	cursor: pointer;
-	font-family: inherit;
 	color: var(--mzk-text);
-	transition: border-color 0.15s ease, background 0.15s ease;
+	cursor: pointer;
+	animation: mzk-rise 0.28s var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		background-color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-slot:hover:not(:disabled) {
+.mzk-root .mzk-modal__dates li:nth-child(2) .mzk-slot { animation-delay: 30ms; }
+.mzk-root .mzk-modal__dates li:nth-child(3) .mzk-slot { animation-delay: 60ms; }
+.mzk-root .mzk-modal__dates li:nth-child(n+4) .mzk-slot { animation-delay: 90ms; }
+
+.mzk-root.mzk-root .mzk-slot:hover:not(:disabled) {
 	border-color: var(--mzk-accent) !important;
 	background: var(--mzk-surface) !important;
+	transform: translateX(2px);
 }
 
-.mzk-slot:disabled {
+.mzk-root.mzk-root .mzk-slot:disabled {
 	opacity: 0.5;
 	cursor: default;
 }
 
-.mzk-slot__date {
-	font-weight: 400;
+.mzk-root .mzk-slot__date {
 	font-size: 0.9em;
+	font-weight: 400;
 }
 
-.mzk-slot__time {
+.mzk-root .mzk-slot__time {
 	grid-column: 1;
 	font-size: 0.8em;
 	color: var(--mzk-muted);
 	font-variant-numeric: tabular-nums;
 }
 
-.mzk-slot__seats {
+.mzk-root .mzk-slot__seats {
 	grid-column: 2;
 	grid-row: 1 / 3;
 	align-self: center;
@@ -1114,42 +1117,44 @@ body.mzk-modal-open {
 	white-space: nowrap;
 }
 
-.mzk-slot.is-full .mzk-slot__seats {
+.mzk-root .mzk-slot.is-full .mzk-slot__seats {
 	color: var(--mzk-alert);
 }
 
-.mzk-modal__back {
+.mzk-root.mzk-root .mzk-modal__back {
 	appearance: none;
 	background: none !important;
 	border: 0 !important;
 	padding: 0;
-	margin: 0 0 14px;
-	cursor: pointer;
-	font-family: inherit;
+	margin-bottom: 14px;
 	font-size: 0.8em;
 	color: var(--mzk-muted);
+	cursor: pointer;
+	transition: color var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-modal__back:hover {
+.mzk-root.mzk-root .mzk-modal__back:hover {
 	color: var(--mzk-accent);
 }
 
-.mzk-modal__chosen {
+.mzk-root .mzk-modal__chosen {
 	display: grid;
 	gap: 2px;
-	background: var(--mzk-surface);
-	border-left: 3px solid var(--mzk-accent);
 	padding: 12px 14px;
 	margin-bottom: 20px;
+	background: var(--mzk-surface);
+	border-left: 3px solid var(--mzk-accent);
 	font-size: 0.85em;
+	animation: mzk-fade-in var(--mzk-slow) var(--mzk-ease);
 }
 
-.mzk-modal__done {
-	text-align: center;
+.mzk-root .mzk-modal__done {
 	padding: 12px 0 4px;
+	text-align: center;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease);
 }
 
-.mzk-modal__tick {
+.mzk-root .mzk-modal__tick {
 	width: 48px;
 	height: 48px;
 	margin: 0 auto 14px;
@@ -1158,92 +1163,105 @@ body.mzk-modal-open {
 	color: #fff;
 	font-size: 24px;
 	line-height: 48px;
+	animation: mzk-pop 0.42s var(--mzk-ease) backwards;
 }
 
-.mzk-modal__done h4 {
-	margin: 0 0 8px;
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 1.5px;
+@keyframes mzk-pop {
+	0%   { opacity: 0; transform: scale(0.6); }
+	60%  { transform: scale(1.08); }
+	100% { opacity: 1; transform: scale(1); }
+}
+
+.mzk-root .mzk-modal__done h4 {
+	margin-bottom: 8px;
 	font-size: 0.8em;
+	letter-spacing: 1.5px;
 }
 
-.mzk-modal__done p {
-	margin: 0 0 16px;
+.mzk-root .mzk-modal__done p {
+	margin-bottom: 16px;
 	font-size: 0.88em;
 	color: var(--mzk-muted);
 }
 
-.mzk-modal__box .mzk-btn {
-	display: inline-block;
-	appearance: none;
-	padding: 14px 28px;
-	border: 1px solid transparent;
-	border-radius: 0;
-	font-family: var(--mzk-font);
-	font-size: 0.72em;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 2px;
-	text-decoration: none !important;
-	cursor: pointer;
+/* ===========================================================================
+   10. Student area, manager, login
+   ======================================================================== */
+
+.mzk-root .mzk-booking {
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-top: 3px solid var(--mzk-accent);
+	padding: 24px;
+	margin-bottom: 20px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
 }
 
-.mzk-modal__box .mzk-btn--primary {
-	background-color: var(--mzk-accent) !important;
-	border-color: var(--mzk-accent) !important;
-	color: #fff;
-}
-
-.mzk-modal__box .mzk-input {
-	width: 100%;
-	padding: 8px 0;
-	border: 0;
-	border-bottom: 1px solid var(--mzk-border);
-	background: transparent;
-	font-family: var(--mzk-font);
-	font-size: 0.9em;
-	min-height: 40px;
-	color: var(--mzk-text);
-}
-
-.mzk-modal__box .mzk-field__label {
-	font-family: var(--mzk-font-head);
-	font-weight: 700;
-	font-size: 0.7em;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
+.mzk-root .mzk-booking--cancelled {
+	border-top-color: var(--mzk-rule);
 	color: var(--mzk-muted);
 }
 
-.mzk-modal__box .mzk-form {
-	display: grid;
-	gap: 16px;
+.mzk-root .mzk-booking--waiting {
+	border-top-color: var(--mzk-warn);
 }
 
-.mzk-modal__box .mzk-field {
-	display: grid;
-	gap: 2px;
+.mzk-root .mzk-booking__title {
+	margin-bottom: 10px;
+	font-size: 0.95em;
 }
 
-/* Login / register --------------------------------------------------------- */
+.mzk-root .mzk-booking__meta {
+	display: flex;
+	gap: 18px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 18px;
+	font-size: 0.85em;
+	color: var(--mzk-muted);
+}
 
-.mzk-auth__grid {
+.mzk-root .mzk-booking__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-root .mzk-alternates {
+	margin-top: 22px;
+	padding-top: 20px;
+	border-top: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-progress {
+	height: 6px;
+	max-width: 260px;
+	margin: 0 0 18px;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	overflow: hidden;
+}
+
+.mzk-root .mzk-progress span {
+	display: block;
+	height: 100%;
+	background: var(--mzk-accent);
+	transition: width 0.6s var(--mzk-ease);
+}
+
+.mzk-root .mzk-auth__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 	gap: 20px;
 	align-items: start;
 }
 
-.mzk-auth__foot {
+.mzk-root .mzk-auth__foot {
 	margin-top: 20px;
 	text-align: center;
 }
 
-/* Student dashboard -------------------------------------------------------- */
-
-.mzk-dash__head {
+.mzk-root .mzk-dash__head {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
@@ -1254,38 +1272,31 @@ body.mzk-modal-open {
 	border-bottom: 1px solid var(--mzk-border);
 }
 
-.mzk-dash__hello {
-	margin: 0 0 4px;
+.mzk-root .mzk-dash__hello {
+	margin-bottom: 4px;
 	font-size: 1em;
 }
 
-.mzk-dash__actions {
+.mzk-root .mzk-dash__actions {
 	display: flex;
 	gap: 10px;
 	flex-wrap: wrap;
 }
 
-.mzk-dash__title {
+.mzk-root .mzk-dash__title {
 	margin: 32px 0 14px;
 	font-size: 0.82em;
 }
 
-.mzk-dash__title:first-of-type {
+.mzk-root .mzk-dash__title:first-of-type {
 	margin-top: 0;
 }
 
-.mzk-booking--waiting {
-	border-top-color: #c9a227;
-}
-
-.mzk-history {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+.mzk-root .mzk-history {
 	border-top: 1px solid var(--mzk-border);
 }
 
-.mzk-history li {
+.mzk-root .mzk-history li {
 	display: flex;
 	gap: 12px;
 	align-items: center;
@@ -1293,60 +1304,73 @@ body.mzk-modal-open {
 	padding: 10px 0;
 	border-bottom: 1px solid var(--mzk-border);
 	font-size: 0.85em;
+	transition: background-color var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-history__date {
+.mzk-root .mzk-history li:hover {
+	background: var(--mzk-surface);
+}
+
+.mzk-root .mzk-history__date {
 	min-width: 120px;
 	color: var(--mzk-muted);
 	font-variant-numeric: tabular-nums;
 }
 
-.mzk-history__class {
+.mzk-root .mzk-history__class {
 	flex: 1 1 auto;
 }
 
-/* Front-end studio manager ------------------------------------------------- */
-
-.mzk-studio__tabs {
+.mzk-root .mzk-studio__tabs {
 	display: flex;
 	gap: 4px;
 	flex-wrap: wrap;
-	border-bottom: 1px solid var(--mzk-border);
 	margin-bottom: 24px;
+	border-bottom: 1px solid var(--mzk-border);
 }
 
-.mzk-studio__tab {
+.mzk-root.mzk-root .mzk-studio__tab {
+	position: relative;
 	padding: 10px 18px;
+	margin-bottom: -1px;
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
 	font-size: 0.72em;
 	text-transform: uppercase;
 	letter-spacing: 1.5px;
-	text-decoration: none;
 	color: var(--mzk-muted);
+	text-decoration: none;
 	border-bottom: 2px solid transparent;
-	margin-bottom: -1px;
+	transition: color var(--mzk-fast) var(--mzk-ease);
 }
 
-.mzk-studio__tab:hover {
+.mzk-root.mzk-root .mzk-studio__tab::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	background: var(--mzk-accent);
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab:hover {
 	color: var(--mzk-text);
 }
 
-.mzk-studio__tab.is-active {
+.mzk-root.mzk-root .mzk-studio__tab.is-active {
 	color: var(--mzk-accent);
-	border-bottom-color: var(--mzk-accent);
 }
 
-.mzk-form--grid {
-	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-	align-items: end;
+.mzk-root.mzk-root .mzk-studio__tab.is-active::after,
+.mzk-root.mzk-root .mzk-studio__tab:hover::after {
+	transform: scaleX(1);
 }
 
-.mzk-form--grid .mzk-form__actions {
-	grid-column: 1 / -1;
-}
-
-.mzk-inline-form {
+.mzk-root .mzk-inline-form {
 	display: flex;
 	gap: 8px;
 	align-items: center;
@@ -1354,48 +1378,27 @@ body.mzk-modal-open {
 	margin: 12px 0;
 }
 
-.mzk-inline-form .mzk-input {
+.mzk-root.mzk-root .mzk-inline-form .mzk-input {
 	flex: 1 1 220px;
-	border: 1px solid var(--mzk-border);
 	padding: 8px 10px;
+	border: 1px solid var(--mzk-border);
 	min-height: 40px;
 }
 
-.mzk-session__tools {
-	display: flex;
-	gap: 6px;
-	flex-wrap: wrap;
-	margin-top: 12px;
+/* Product page session picker */
+
+.mzk-root.mzk-product-picker {
+	margin: 0 0 20px;
 }
 
-.mzk-mini {
-	display: inline-block;
+.mzk-root.mzk-root .mzk-product-picker .mzk-input,
+.mzk-product-picker .mzk-input {
+	padding: 10px 12px;
 	border: 1px solid var(--mzk-border);
-	padding: 4px 10px;
-	font-size: 0.72em;
-	line-height: 1.4;
-	text-decoration: none;
-	color: var(--mzk-text);
 	background: var(--mzk-bg);
 }
 
-.mzk-mini:hover {
-	border-color: var(--mzk-accent);
-	color: var(--mzk-accent);
-}
-
-/* List view --------------------------------------------------------------- */
-
-.mzk-list__day {
-	margin-bottom: 32px;
-}
-
-.mzk-list__date {
-	margin: 0 0 16px;
-	font-size: 0.9em;
-}
-
-.mzk-note {
-	color: var(--mzk-muted);
-	font-size: 0.85em;
+.mzk-product-picker .mzk-note {
+	margin: 8px 0 0;
+	font-size: 0.78em;
 }

@@ -17,7 +17,7 @@ $messages = array(
 	'login'   => __( 'That username or password was not recognised.', 'mizuki-booking' ),
 );
 ?>
-<div class="mzk-manage mzk-auth">
+<div class="mzk-root mzk-manage mzk-auth">
 
 	<?php if ( $error && isset( $messages[ $error ] ) ) : ?>
 		<div class="mzk-notice mzk-notice--error"><?php echo esc_html( $messages[ $error ] ); ?></div>

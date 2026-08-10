@@ -141,7 +141,7 @@ class MZK_Account {
 	 */
 	public static function render_courses_shortcode() {
 		if ( ! is_user_logged_in() ) {
-			return '<div class="mzk-manage"><p class="mzk-note">'
+			return '<div class="mzk-root mzk-manage"><p class="mzk-note">'
 				. esc_html__( 'Please log in to see your course balance.', 'mizuki-booking' )
 				. '</p></div>';
 		}
@@ -157,7 +157,7 @@ class MZK_Account {
 	 */
 	private static function courses_markup( $enrollments ) {
 		ob_start();
-		echo '<div class="mzk-manage">';
+		echo '<div class="mzk-root mzk-manage">';
 
 		if ( ! $enrollments ) {
 			echo '<p class="mzk-note">' . esc_html__( 'You have no course packages yet.', 'mizuki-booking' ) . '</p>';

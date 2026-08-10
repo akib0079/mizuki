@@ -248,7 +248,7 @@ class MZK_Woo {
 
 		MZK_Shortcodes::ensure_assets();
 
-		echo '<div class="mzk-product-picker mzk-calendar">';
+		echo '<div class="mzk-root mzk-product-picker">';
 		echo '<label class="mzk-field"><span class="mzk-field__label">' . esc_html__( 'Choose your session', 'mizuki-booking' ) . ' *</span>';
 
 		if ( ! $sessions ) {
