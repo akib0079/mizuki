@@ -23,6 +23,7 @@ $weekdays = MZK_Utils::weekdays();
 $tabs = array(
 	'list'      => __( 'All sessions', 'mizuki-booking' ),
 	'add'       => $edit_id ? __( 'Edit session', 'mizuki-booking' ) : __( 'Add session', 'mizuki-booking' ),
+	'bulk'      => __( 'Add many', 'mizuki-booking' ),
 	'templates' => __( 'Weekly pattern', 'mizuki-booking' ),
 );
 ?>
@@ -176,6 +177,82 @@ $tabs = array(
 			}
 			?>
 		<?php endif; ?>
+
+	<?php elseif ( 'bulk' === $tab ) : ?>
+
+		<div class="mzk-card">
+			<h2><?php esc_html_e( 'Add a batch of sessions', 'mizuki-booking' ); ?></h2>
+			<p class="description">
+				<?php esc_html_e( 'For a run of workshop dates that do not follow a weekly pattern — a term of weekends, say. List the dates, add the time slots that run on each of them, and every combination is created in one go.', 'mizuki-booking' ); ?>
+			</p>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php MZK_Admin::form_fields( 'bulk_sessions' ); ?>
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Class', 'mizuki-booking' ); ?></th>
+						<td>
+							<select name="class_type_id" required>
+								<?php foreach ( $types as $type ) : ?>
+									<option value="<?php echo esc_attr( $type->id ); ?>"><?php echo esc_html( $type->name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mzk-bulk-dates"><?php esc_html_e( 'Dates', 'mizuki-booking' ); ?></label></th>
+						<td>
+							<textarea id="mzk-bulk-dates" name="dates" rows="4" class="large-text code" required
+								placeholder="2026-08-15 2026-08-16 2026-08-22 2026-08-23"></textarea>
+							<p class="description">
+								<?php esc_html_e( 'One date per line, or separated by spaces or commas. Format: YYYY-MM-DD.', 'mizuki-booking' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Time slots on each date', 'mizuki-booking' ); ?></th>
+						<td>
+							<table class="widefat" style="max-width: 560px;">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Starts', 'mizuki-booking' ); ?></th>
+										<th><?php esc_html_e( 'Minutes', 'mizuki-booking' ); ?></th>
+										<th><?php esc_html_e( 'Places', 'mizuki-booking' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+								<?php for ( $i = 0; $i < 4; $i++ ) : ?>
+									<tr>
+										<td><input type="time" name="slot_time[]" /></td>
+										<td><input type="number" name="slot_duration[]" min="15" step="15" placeholder="180" /></td>
+										<td><input type="number" name="slot_capacity[]" min="1" placeholder="6" /></td>
+									</tr>
+								<?php endfor; ?>
+								</tbody>
+							</table>
+							<p class="description">
+								<?php esc_html_e( 'Leave a row empty to skip it. A morning and an afternoon slot across 4 dates creates 8 sessions.', 'mizuki-booking' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="mzk-bulk-title"><?php esc_html_e( 'Session name', 'mizuki-booking' ); ?></label></th>
+						<td>
+							<input type="text" id="mzk-bulk-title" name="title" class="regular-text"
+								placeholder="<?php esc_attr_e( 'e.g. Ikebana Workshop — optional', 'mizuki-booking' ); ?>" />
+						</td>
+					</tr>
+				</table>
+
+				<p class="submit">
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Create these sessions', 'mizuki-booking' ); ?></button>
+				</p>
+				<p class="description">
+					<?php esc_html_e( 'Nothing is duplicated — a session that already exists at the same class, date and time is left alone, so it is safe to run twice.', 'mizuki-booking' ); ?>
+				</p>
+			</form>
+		</div>
 
 	<?php elseif ( 'templates' === $tab ) : ?>
 
@@ -416,6 +493,45 @@ $tabs = array(
 						<a class="mzk-danger" data-mzk-confirm href="<?php echo esc_url( MZK_Admin::action_url( 'delete_session', array( 'id' => $session->id ) ) ); ?>">
 							<?php esc_html_e( 'Delete', 'mizuki-booking' ); ?>
 						</a>
+
+						<details class="mzk-move">
+							<summary><?php esc_html_e( 'Move', 'mizuki-booking' ); ?></summary>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<?php MZK_Admin::form_fields( 'move_session' ); ?>
+								<input type="hidden" name="id" value="<?php echo esc_attr( $session->id ); ?>" />
+								<input type="hidden" name="return_page" value="mzk-sessions" />
+								<p>
+									<input type="date" name="session_date" required value="<?php echo esc_attr( $session->session_date ); ?>" />
+									<input type="time" name="start_time" required value="<?php echo esc_attr( substr( $session->start_time, 0, 5 ) ); ?>" />
+								</p>
+								<p>
+									<input type="text" name="reason" class="regular-text"
+										placeholder="<?php esc_attr_e( 'Reason, shown to students (optional)', 'mizuki-booking' ); ?>" />
+								</p>
+								<p>
+									<label>
+										<input type="checkbox" name="skip_emails" value="1" />
+										<?php esc_html_e( 'Do not tell the students', 'mizuki-booking' ); ?>
+									</label>
+								</p>
+								<p>
+									<button type="submit" class="button button-primary button-small">
+										<?php esc_html_e( 'Move this session', 'mizuki-booking' ); ?>
+									</button>
+									<?php if ( $session->seats_taken ) : ?>
+										<span class="description">
+											<?php
+											printf(
+												/* translators: %d: students booked. */
+												esc_html( _n( '%d student keeps their place and is e-mailed.', '%d students keep their places and are e-mailed.', (int) $session->seats_taken, 'mizuki-booking' ) ),
+												(int) $session->seats_taken
+											);
+											?>
+										</span>
+									<?php endif; ?>
+								</p>
+							</form>
+						</details>
 					</td>
 				</tr>
 			<?php endforeach; ?>

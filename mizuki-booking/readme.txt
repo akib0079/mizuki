@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.3.0
+Stable tag: 3.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,13 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.4.0 =
+* Move a session to another date or time. Students keep their place and are e-mailed the change automatically - for when the studio has to be away.
+* Add many sessions at once: list the dates, add the time slots that run on each, and every combination is created. Nothing is duplicated.
+* Book now on a class opens the whole flow in a dialog - pick a date, pick a session, fill in your details - without leaving the page.
+* New e-mail template for a moved class, and every notification is now editable in Settings.
+* Test suite moved into the plugin: run `sh tests/run.sh`.
 
 = 3.3.0 =
 * E-mail can now be sent through Resend instead of the host's mailer, which is the usual reason nothing arrives on shared hosting.

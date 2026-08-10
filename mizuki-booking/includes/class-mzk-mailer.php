@@ -39,6 +39,7 @@ class MZK_Mailer {
 			'{old_session_date}' => '',
 			'{old_session_time}' => '',
 			'{sessions_left}'    => '',
+			'{reason}'           => '',
 		);
 
 		if ( $old_session ) {
@@ -338,6 +339,44 @@ class MZK_Mailer {
 	}
 
 	/**
+	 * Tell a student their class has been moved to a new date or time.
+	 *
+	 * @param int    $booking_id Booking id.
+	 * @param object $old        Previous date/time.
+	 * @param string $reason     Optional note from the studio.
+	 * @return bool
+	 */
+	public static function send_session_moved( $booking_id, $old, $reason = '' ) {
+		$booking = self::get_booking_or_false( $booking_id );
+		if ( ! $booking ) {
+			return false;
+		}
+
+		$settings = MZK_Install::get_settings();
+		$tags     = self::tags( $booking, $old );
+
+		$tags['{reason}'] = $reason ? $reason : '';
+
+		return self::send(
+			$booking->email,
+			self::render( $settings['moved_subject'], $tags ),
+			self::render( $settings['moved_body'], $tags ),
+			'session_moved'
+		);
+	}
+
+	/**
+	 * Fetch a booking, or false.
+	 *
+	 * @param int $booking_id Booking id.
+	 * @return object|false
+	 */
+	private static function get_booking_or_false( $booking_id ) {
+		$booking = MZK_Bookings::get( $booking_id );
+		return $booking ? $booking : false;
+	}
+
+	/**
 	 * Internal copy of a new booking for the studio.
 	 *
 	 * @param int $booking_id Booking id.
@@ -417,6 +456,7 @@ class MZK_Mailer {
 			'{old_session_date}' => MZK_Utils::format_date( gmdate( 'Y-m-d', strtotime( '+3 days' ) ) ),
 			'{old_session_time}' => '2:00 pm – 4:00 pm',
 			'{sessions_left}'    => '12',
+			'{reason}'           => 'The studio is closed that weekend.',
 		);
 
 		$sent = self::send(

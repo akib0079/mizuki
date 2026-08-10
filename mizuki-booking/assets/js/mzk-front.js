@@ -666,9 +666,265 @@
 		card.appendChild( box );
 	};
 
+	/* ----------------------------------------------------------- book modal */
+
+	/**
+	 * "Book now" on a class card opens the whole flow in a dialog: pick a date,
+	 * pick a session, fill in your details, done — without leaving the page.
+	 */
+	function BookModal( classSlug, className ) {
+		this.classSlug = classSlug;
+		this.className = className || '';
+		this.sessions = [];
+		this.selected = null;
+		this.open();
+	}
+
+	BookModal.prototype.open = function () {
+		var self = this;
+
+		this.overlay = el( 'div', 'mzk-modal' );
+		this.overlay.setAttribute( 'role', 'dialog' );
+		this.overlay.setAttribute( 'aria-modal', 'true' );
+		this.overlay.setAttribute( 'aria-label', I18N.book );
+
+		this.dialog = el( 'div', 'mzk-modal__box' );
+
+		var head = el( 'div', 'mzk-modal__head' );
+		head.appendChild( el( 'h3', 'mzk-modal__title', this.className || I18N.book ) );
+
+		var close = el( 'button', 'mzk-modal__close' );
+		close.type = 'button';
+		close.setAttribute( 'aria-label', I18N.cancel );
+		close.innerHTML = '&times;';
+		close.addEventListener( 'click', function () { self.close(); } );
+		head.appendChild( close );
+
+		this.dialog.appendChild( head );
+
+		this.content = el( 'div', 'mzk-modal__body' );
+		this.content.appendChild( el( 'div', 'mzk-loading', I18N.loading ) );
+		this.dialog.appendChild( this.content );
+
+		this.overlay.appendChild( this.dialog );
+		document.body.appendChild( this.overlay );
+		document.body.classList.add( 'mzk-modal-open' );
+
+		this.overlay.addEventListener( 'click', function ( event ) {
+			if ( event.target === self.overlay ) {
+				self.close();
+			}
+		} );
+
+		this.onKey = function ( event ) {
+			if ( 'Escape' === event.key ) {
+				self.close();
+			}
+		};
+		document.addEventListener( 'keydown', this.onKey );
+
+		var query = '/calendar';
+		if ( this.classSlug ) {
+			query += '?class_type=' + encodeURIComponent( this.classSlug );
+		}
+
+		api( query )
+			.then( function ( data ) {
+				self.data = data;
+				self.sessions = [];
+				Object.keys( data.days || {} ).sort().forEach( function ( key ) {
+					data.days[ key ].forEach( function ( s ) { self.sessions.push( s ); } );
+				} );
+				self.renderPick();
+			} )
+			.catch( function ( error ) {
+				clear( self.content );
+				self.content.appendChild( notice( 'error', error.message || I18N.error ) );
+			} );
+
+		close.focus();
+	};
+
+	BookModal.prototype.close = function () {
+		document.removeEventListener( 'keydown', this.onKey );
+		document.body.classList.remove( 'mzk-modal-open' );
+		if ( this.overlay && this.overlay.parentNode ) {
+			this.overlay.parentNode.removeChild( this.overlay );
+		}
+	};
+
+	BookModal.prototype.renderPick = function () {
+		var self = this;
+		clear( this.content );
+
+		if ( ! this.sessions.length ) {
+			this.content.appendChild( notice( 'info', I18N.noneInRange ) );
+			return;
+		}
+
+		this.content.appendChild( el( 'p', 'mzk-modal__step', I18N.step1 ) );
+
+		var list = el( 'ul', 'mzk-modal__dates' );
+
+		this.sessions.forEach( function ( session ) {
+			var item = el( 'li' );
+			var btn = el( 'button', 'mzk-slot' + ( session.bookable ? '' : ' is-full' ) );
+			btn.type = 'button';
+			btn.disabled = ! session.bookable;
+
+			btn.appendChild( el( 'span', 'mzk-slot__date', session.dateLabel ) );
+			btn.appendChild( el( 'span', 'mzk-slot__time', session.timeLabel ) );
+			btn.appendChild(
+				el(
+					'span',
+					'mzk-slot__seats',
+					session.isFull ? I18N.full : sprintf1( I18N.seatsLeft, session.seatsLeft )
+				)
+			);
+
+			if ( session.bookable ) {
+				btn.addEventListener( 'click', function () {
+					self.selected = session;
+					self.renderForm();
+				} );
+			}
+
+			item.appendChild( btn );
+			list.appendChild( item );
+		} );
+
+		this.content.appendChild( list );
+	};
+
+	BookModal.prototype.renderForm = function () {
+		var self = this;
+		var session = this.selected;
+		clear( this.content );
+
+		var back = el( 'button', 'mzk-modal__back', '← ' + I18N.back );
+		back.type = 'button';
+		back.addEventListener( 'click', function () { self.renderPick(); } );
+		this.content.appendChild( back );
+
+		var chosen = el( 'div', 'mzk-modal__chosen' );
+		chosen.appendChild( el( 'strong', null, session.className ) );
+		chosen.appendChild( el( 'span', null, session.dateLabel + ' · ' + session.timeLabel ) );
+		this.content.appendChild( chosen );
+
+		// Paid classes go to the shop so the seat and its payment stay together.
+		if ( session.enrolUrl ) {
+			this.content.appendChild( notice( 'info', I18N.payFirst ) );
+			var go = el( 'a', 'mzk-btn mzk-btn--primary', I18N.bookAndPay );
+			go.href = session.enrolUrl;
+			this.content.appendChild( go );
+			return;
+		}
+
+		this.content.appendChild( el( 'p', 'mzk-modal__step', I18N.step2 ) );
+
+		var form = el( 'form', 'mzk-form' );
+
+		function field( name, label, type, required ) {
+			var wrap = el( 'label', 'mzk-field' );
+			wrap.appendChild( el( 'span', 'mzk-field__label', label + ( required ? ' *' : '' ) ) );
+			var input = 'textarea' === type ? el( 'textarea' ) : el( 'input' );
+			if ( 'textarea' !== type ) { input.type = type; }
+			input.name = name;
+			input.className = 'mzk-input';
+			if ( required ) { input.required = true; }
+			wrap.appendChild( input );
+			form.appendChild( wrap );
+			return input;
+		}
+
+		var name = field( 'student_name', I18N.name, 'text', true );
+		var email = field( 'email', I18N.email, 'email', true );
+		var phone = field( 'phone', I18N.phone, 'tel', !! CFG.requirePhone );
+		field( 'notes', I18N.notes, 'textarea', false );
+
+		var honey = el( 'input', 'mzk-honey' );
+		honey.type = 'text';
+		honey.name = 'website';
+		honey.tabIndex = -1;
+		form.appendChild( honey );
+
+		var actions = el( 'div', 'mzk-form__actions' );
+		var submit = el( 'button', 'mzk-btn mzk-btn--primary', I18N.confirm );
+		submit.type = 'submit';
+		actions.appendChild( submit );
+		form.appendChild( actions );
+
+		form.addEventListener( 'submit', function ( event ) {
+			event.preventDefault();
+
+			var old = form.querySelector( '.mzk-notice' );
+			if ( old ) { old.remove(); }
+
+			if ( ! name.value.trim() || ! email.value.trim() || ( CFG.requirePhone && ! phone.value.trim() ) ) {
+				form.appendChild( notice( 'error', I18N.required ) );
+				return;
+			}
+
+			submit.disabled = true;
+			submit.textContent = I18N.booking;
+
+			api( '/bookings', {
+				method: 'POST',
+				body: {
+					session_id: session.id,
+					student_name: name.value,
+					email: email.value,
+					phone: phone.value,
+					notes: form.elements.notes.value,
+					website: honey.value
+				}
+			} )
+				.then( function ( response ) { self.renderDone( response, session ); } )
+				.catch( function ( error ) {
+					submit.disabled = false;
+					submit.textContent = I18N.confirm;
+					form.appendChild( notice( 'error', error.message || I18N.error ) );
+				} );
+		} );
+
+		this.content.appendChild( form );
+		name.focus();
+	};
+
+	BookModal.prototype.renderDone = function ( response, session ) {
+		clear( this.content );
+
+		var done = el( 'div', 'mzk-modal__done' );
+		done.appendChild( el( 'div', 'mzk-modal__tick', '✓' ) );
+		done.appendChild( el( 'h4', null, response.message ) );
+		done.appendChild( el( 'p', null, session.className + ' — ' + session.dateLabel + ', ' + session.timeLabel ) );
+
+		if ( response.booking && 'awaiting_approval' === response.booking.status ) {
+			done.appendChild( notice( 'info', I18N.awaitingNote ) );
+		}
+
+		if ( response.manageUrl ) {
+			var link = el( 'a', 'mzk-btn mzk-btn--primary', I18N.viewBooking );
+			link.href = response.manageUrl;
+			done.appendChild( link );
+		}
+
+		this.content.appendChild( done );
+	};
+
 	/* ------------------------------------------------------------- bootstrap */
 
 	function boot() {
+		// Any "Book now" control opens the flow in a dialog.
+		document.addEventListener( 'click', function ( event ) {
+			var trigger = event.target.closest( '[data-mzk-book]' );
+			if ( ! trigger ) {
+				return;
+			}
+			event.preventDefault();
+			new BookModal( trigger.getAttribute( 'data-mzk-book' ), trigger.getAttribute( 'data-mzk-class-name' ) );
+		} );
+
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-mzk-calendar]' ), function ( node ) {
 			new Calendar( node );
 		} );

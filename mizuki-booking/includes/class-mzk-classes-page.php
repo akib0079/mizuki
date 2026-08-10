@@ -42,6 +42,7 @@ class MZK_Classes_Page {
 		);
 
 		wp_enqueue_style( 'mzk-front' );
+		wp_enqueue_script( 'mzk-front' );
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$requested = isset( $_GET['class'] ) ? sanitize_title( wp_unslash( $_GET['class'] ) ) : '';
@@ -199,8 +200,10 @@ class MZK_Classes_Page {
 
 						<div class="mzk-class__actions">
 							<?php if ( $url ) : ?>
-								<a class="mzk-btn mzk-btn--primary" href="<?php echo esc_url( $url ); ?>">
-									<?php echo $type->course_based ? esc_html__( 'Enrol', 'mizuki-booking' ) : esc_html__( 'Book a place', 'mizuki-booking' ); ?>
+								<a class="mzk-btn mzk-btn--primary" href="<?php echo esc_url( $url ); ?>"
+									data-mzk-book="<?php echo esc_attr( $type->slug ); ?>"
+									data-mzk-class-name="<?php echo esc_attr( $type->name ); ?>">
+									<?php echo $type->course_based ? esc_html__( 'Enrol', 'mizuki-booking' ) : esc_html__( 'Book now', 'mizuki-booking' ); ?>
 								</a>
 							<?php endif; ?>
 							<a class="mzk-btn mzk-btn--ghost" href="<?php echo esc_url( add_query_arg( 'class', $type->slug ) ); ?>">
@@ -292,8 +295,10 @@ class MZK_Classes_Page {
 
 					<div class="mzk-class__actions">
 						<?php if ( $url ) : ?>
-							<a class="mzk-btn mzk-btn--primary" href="<?php echo esc_url( $url ); ?>">
-								<?php echo $type->course_based ? esc_html__( 'Enrol on this course', 'mizuki-booking' ) : esc_html__( 'Book a place', 'mizuki-booking' ); ?>
+							<a class="mzk-btn mzk-btn--primary" href="<?php echo esc_url( $url ); ?>"
+								data-mzk-book="<?php echo esc_attr( $type->slug ); ?>"
+								data-mzk-class-name="<?php echo esc_attr( $type->name ); ?>">
+								<?php echo $type->course_based ? esc_html__( 'Enrol on this course', 'mizuki-booking' ) : esc_html__( 'Book now', 'mizuki-booking' ); ?>
 							</a>
 						<?php endif; ?>
 						<a class="mzk-btn mzk-btn--ghost" href="<?php echo esc_url( remove_query_arg( 'class' ) ); ?>">
@@ -323,7 +328,9 @@ class MZK_Classes_Page {
 										?>
 									</span>
 									<?php if ( $url ) : ?>
-										<a class="mzk-mini" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Book', 'mizuki-booking' ); ?></a>
+										<a class="mzk-mini" href="<?php echo esc_url( $url ); ?>"
+											data-mzk-book="<?php echo esc_attr( $type->slug ); ?>"
+											data-mzk-class-name="<?php echo esc_attr( $type->name ); ?>"><?php esc_html_e( 'Book', 'mizuki-booking' ); ?></a>
 									<?php endif; ?>
 								</li>
 							<?php endforeach; ?>

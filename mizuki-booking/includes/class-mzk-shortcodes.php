@@ -126,6 +126,12 @@ class MZK_Shortcodes {
 			'moveHere'       => __( 'Move to this session', 'mizuki-booking' ),
 			'noAlternates'   => __( 'There are no other sessions available to move to right now.', 'mizuki-booking' ),
 			'noBookings'     => __( 'You have no bookings yet.', 'mizuki-booking' ),
+			'step1'          => __( 'Choose the date that suits you', 'mizuki-booking' ),
+			'step2'          => __( 'Your details', 'mizuki-booking' ),
+			'payFirst'       => __( 'This class is paid for when you book. You will be taken to the shop to complete it.', 'mizuki-booking' ),
+			'bookAndPay'     => __( 'Book and pay', 'mizuki-booking' ),
+			'awaitingNote'   => __( 'Your place is held while the studio confirms it. We will e-mail you as soon as it is approved.', 'mizuki-booking' ),
+			'viewBooking'    => __( 'View my booking', 'mizuki-booking' ),
 		);
 	}
 

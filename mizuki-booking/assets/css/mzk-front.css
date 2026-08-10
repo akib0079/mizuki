@@ -955,6 +955,278 @@ textarea.mzk-input {
 	margin-left: 4px;
 }
 
+/* Booking dialog ----------------------------------------------------------- */
+
+body.mzk-modal-open {
+	overflow: hidden;
+}
+
+.mzk-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	background: rgba(22, 42, 60, 0.55);
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 5vh 16px;
+	overflow-y: auto;
+	-webkit-backdrop-filter: blur(2px);
+	backdrop-filter: blur(2px);
+}
+
+.mzk-modal__box {
+	--mzk-primary: var(--e-global-color-primary, #2d5778);
+	--mzk-accent: var(--e-global-color-secondary, #3f827a);
+	--mzk-text: var(--e-global-color-text, #162a3c);
+	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
+	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
+	--mzk-bg: #ffffff;
+	--mzk-border: #e7e7e7;
+	--mzk-alert: #9d3b3b;
+	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
+	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
+
+	width: 100%;
+	max-width: 520px;
+	background: var(--mzk-bg);
+	border-top: 3px solid var(--mzk-accent);
+	box-shadow: 0 20px 60px rgba(22, 42, 60, 0.28);
+	font-family: var(--mzk-font);
+	font-weight: 300;
+	color: var(--mzk-text);
+	line-height: 1.6;
+	animation: mzk-modal-in 0.18s ease-out;
+}
+
+@keyframes mzk-modal-in {
+	from { opacity: 0; transform: translateY(-8px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mzk-modal__box { animation: none; }
+}
+
+.mzk-modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 22px 24px 16px;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-modal__title {
+	margin: 0;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-size: 0.82em;
+	color: var(--mzk-text);
+}
+
+.mzk-modal__close {
+	appearance: none;
+	background: none !important;
+	border: 0 !important;
+	font-size: 26px;
+	line-height: 1;
+	padding: 0 4px;
+	cursor: pointer;
+	color: var(--mzk-muted);
+}
+
+.mzk-modal__close:hover {
+	color: var(--mzk-text);
+}
+
+.mzk-modal__body {
+	padding: 22px 24px 26px;
+	max-height: 70vh;
+	overflow-y: auto;
+}
+
+.mzk-modal__step {
+	margin: 0 0 14px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.7em;
+	color: var(--mzk-muted);
+}
+
+.mzk-modal__dates {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mzk-slot {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 2px 12px;
+	width: 100%;
+	text-align: left;
+	appearance: none;
+	background: var(--mzk-bg) !important;
+	border: 1px solid var(--mzk-border) !important;
+	border-radius: 0;
+	padding: 12px 14px;
+	cursor: pointer;
+	font-family: inherit;
+	color: var(--mzk-text);
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mzk-slot:hover:not(:disabled) {
+	border-color: var(--mzk-accent) !important;
+	background: var(--mzk-surface) !important;
+}
+
+.mzk-slot:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.mzk-slot__date {
+	font-weight: 400;
+	font-size: 0.9em;
+}
+
+.mzk-slot__time {
+	grid-column: 1;
+	font-size: 0.8em;
+	color: var(--mzk-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-slot__seats {
+	grid-column: 2;
+	grid-row: 1 / 3;
+	align-self: center;
+	font-size: 0.78em;
+	color: var(--mzk-accent);
+	white-space: nowrap;
+}
+
+.mzk-slot.is-full .mzk-slot__seats {
+	color: var(--mzk-alert);
+}
+
+.mzk-modal__back {
+	appearance: none;
+	background: none !important;
+	border: 0 !important;
+	padding: 0;
+	margin: 0 0 14px;
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 0.8em;
+	color: var(--mzk-muted);
+}
+
+.mzk-modal__back:hover {
+	color: var(--mzk-accent);
+}
+
+.mzk-modal__chosen {
+	display: grid;
+	gap: 2px;
+	background: var(--mzk-surface);
+	border-left: 3px solid var(--mzk-accent);
+	padding: 12px 14px;
+	margin-bottom: 20px;
+	font-size: 0.85em;
+}
+
+.mzk-modal__done {
+	text-align: center;
+	padding: 12px 0 4px;
+}
+
+.mzk-modal__tick {
+	width: 48px;
+	height: 48px;
+	margin: 0 auto 14px;
+	border-radius: 50%;
+	background: var(--mzk-accent);
+	color: #fff;
+	font-size: 24px;
+	line-height: 48px;
+}
+
+.mzk-modal__done h4 {
+	margin: 0 0 8px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.8em;
+}
+
+.mzk-modal__done p {
+	margin: 0 0 16px;
+	font-size: 0.88em;
+	color: var(--mzk-muted);
+}
+
+.mzk-modal__box .mzk-btn {
+	display: inline-block;
+	appearance: none;
+	padding: 14px 28px;
+	border: 1px solid transparent;
+	border-radius: 0;
+	font-family: var(--mzk-font);
+	font-size: 0.72em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	text-decoration: none !important;
+	cursor: pointer;
+}
+
+.mzk-modal__box .mzk-btn--primary {
+	background-color: var(--mzk-accent) !important;
+	border-color: var(--mzk-accent) !important;
+	color: #fff;
+}
+
+.mzk-modal__box .mzk-input {
+	width: 100%;
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid var(--mzk-border);
+	background: transparent;
+	font-family: var(--mzk-font);
+	font-size: 0.9em;
+	min-height: 40px;
+	color: var(--mzk-text);
+}
+
+.mzk-modal__box .mzk-field__label {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.7em;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--mzk-muted);
+}
+
+.mzk-modal__box .mzk-form {
+	display: grid;
+	gap: 16px;
+}
+
+.mzk-modal__box .mzk-field {
+	display: grid;
+	gap: 2px;
+}
+
 /* Login / register --------------------------------------------------------- */
 
 .mzk-auth__grid {

@@ -62,7 +62,13 @@ class MZK_Install {
 			'declined_body'        => self::default_declined_body(),
 			'welcome_subject'      => __( 'Your {studio_name} account', 'mizuki-booking' ),
 			'welcome_body'         => self::default_welcome_body(),
+			'moved_subject'        => __( 'Your class has moved - {class_type}', 'mizuki-booking' ),
+			'moved_body'           => self::default_moved_body(),
 		);
+	}
+
+	public static function default_moved_body() {
+		return "Hi {student_name},\n\nWe have had to move your class. Your place is still reserved — you do not need to book again.\n\nClass: {class_type}\nWas: {old_session_date} at {old_session_time}\nNow: {session_date} at {session_time}\n\n{reason}\n\nIf the new time does not suit you, you can change it here:\n{manage_url}\n\nWith apologies for the change,\n{studio_name}";
 	}
 
 	public static function default_pending_body() {

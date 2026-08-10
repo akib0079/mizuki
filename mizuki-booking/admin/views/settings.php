@@ -252,10 +252,15 @@ $tags     = '{student_name} {student_email} {student_phone} {class_type} {sessio
 
 		<?php
 		$templates = array(
-			'confirm'    => __( 'Booking confirmation (sent immediately)', 'mizuki-booking' ),
+			'pending'    => __( 'Registration received (waiting for your approval)', 'mizuki-booking' ),
+			'approved'   => __( 'Registration approved', 'mizuki-booking' ),
+			'declined'   => __( 'Registration declined', 'mizuki-booking' ),
+			'confirm'    => __( 'Booking confirmation (when no approval is needed)', 'mizuki-booking' ),
 			'reminder'   => __( 'Class reminder', 'mizuki-booking' ),
-			'reschedule' => __( 'Reschedule confirmation', 'mizuki-booking' ),
+			'moved'      => __( 'Class moved to a new date', 'mizuki-booking' ),
+			'reschedule' => __( 'Student rescheduled themselves', 'mizuki-booking' ),
 			'cancel'     => __( 'Cancellation notice', 'mizuki-booking' ),
+			'welcome'    => __( 'Welcome — new student account', 'mizuki-booking' ),
 		);
 		foreach ( $templates as $key => $label ) :
 			?>

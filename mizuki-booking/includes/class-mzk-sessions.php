@@ -413,6 +413,213 @@ class MZK_Sessions {
 		return true;
 	}
 
+	/**
+	 * Move a session to another date and/or time, and tell everyone booked on it.
+	 *
+	 * This is the "I have to be away that weekend" case: the class still runs, it
+	 * just moves. Students keep their place — they are not cancelled and re-booked —
+	 * so nobody loses a seat and no course session is spent twice.
+	 *
+	 * @param int    $id      Session id.
+	 * @param string $date    New date, Y-m-d.
+	 * @param string $time    New start time, H:i.
+	 * @param array  $opts    notify (bool), duration_minutes (int|null), reason (string).
+	 * @return array|WP_Error {moved:bool, notified:int}
+	 */
+	public static function move( $id, $date, $time, $opts = array() ) {
+		global $wpdb;
+
+		$session = self::get( $id );
+		if ( ! $session ) {
+			return new WP_Error( 'mzk_no_session', __( 'Session not found.', 'mizuki-booking' ) );
+		}
+
+		$date = MZK_Utils::sanitize_date( $date );
+		$time = MZK_Utils::sanitize_time( $time );
+		if ( ! $date || ! $time ) {
+			return new WP_Error( 'mzk_bad_when', __( 'Please give a valid new date and time.', 'mizuki-booking' ) );
+		}
+
+		$duration = isset( $opts['duration_minutes'] ) && $opts['duration_minutes']
+			? max( 15, (int) $opts['duration_minutes'] )
+			: (int) $session->duration_minutes;
+
+		if ( $date === $session->session_date
+			&& $time === $session->start_time
+			&& $duration === (int) $session->duration_minutes ) {
+			return new WP_Error( 'mzk_no_change', __( 'That is already when the session runs.', 'mizuki-booking' ) );
+		}
+
+		// Refuse to move a class on top of another one for the same students.
+		$clash = $wpdb->get_var( // phpcs:ignore WordPress.DB
+			$wpdb->prepare(
+				"SELECT id FROM " . MZK_DB::sessions() . " WHERE class_type_id = %d AND session_date = %s AND start_time = %s AND id <> %d", // phpcs:ignore WordPress.DB
+				(int) $session->class_type_id,
+				$date,
+				$time,
+				(int) $id
+			)
+		);
+		if ( $clash ) {
+			return new WP_Error(
+				'mzk_clash',
+				__( 'There is already a session of this class at that date and time.', 'mizuki-booking' )
+			);
+		}
+
+		$old = (object) array(
+			'session_date'     => $session->session_date,
+			'start_time'       => $session->start_time,
+			'duration_minutes' => $session->duration_minutes,
+		);
+
+		$wpdb->update( // phpcs:ignore WordPress.DB
+			MZK_DB::sessions(),
+			array(
+				'session_date'     => $date,
+				'start_time'       => $time,
+				'duration_minutes' => $duration,
+				'updated_at'       => current_time( 'mysql' ),
+			),
+			array( 'id' => (int) $id )
+		);
+
+		// A moved class needs its reminder sending again for the new date.
+		$wpdb->query( // phpcs:ignore WordPress.DB
+			$wpdb->prepare(
+				"UPDATE " . MZK_DB::bookings() . " SET reminder_sent_at = NULL WHERE session_id = %d", // phpcs:ignore WordPress.DB
+				(int) $id
+			)
+		);
+
+		$notified = 0;
+		if ( empty( $opts['skip_emails'] ) ) {
+			$booked = MZK_Bookings::query(
+				array(
+					'session_id' => (int) $id,
+					'statuses'   => array( 'confirmed', 'awaiting_approval' ),
+				)
+			);
+			foreach ( $booked as $booking ) {
+				if ( MZK_Mailer::send_session_moved( (int) $booking->id, $old, $opts['reason'] ?? '' ) ) {
+					++$notified;
+				}
+			}
+		}
+
+		/**
+		 * Fires after a session is moved to a new date or time.
+		 *
+		 * @param int    $id  Session id.
+		 * @param object $old Previous date/time.
+		 */
+		do_action( 'mzk_session_moved', (int) $id, $old );
+
+		return array(
+			'moved'    => true,
+			'notified' => $notified,
+		);
+	}
+
+	/**
+	 * Create many sessions at once: a set of dates, each with the same time slots.
+	 *
+	 * Studios plan a term as "these weekends, morning and afternoon", which is
+	 * tedious one session at a time. Existing sessions are never duplicated.
+	 *
+	 * @param int    $class_type_id Class type id.
+	 * @param array  $dates         Y-m-d strings.
+	 * @param array  $slots         Each: array( 'time' => 'H:i', 'duration' => minutes, 'capacity' => int ).
+	 * @param string $title         Optional session name.
+	 * @return array|WP_Error {created:int, skipped:int, blocked:int}
+	 */
+	public static function bulk_create( $class_type_id, $dates, $slots, $title = '' ) {
+		$type = MZK_Class_Types::get( $class_type_id );
+		if ( ! $type ) {
+			return new WP_Error( 'mzk_bad_class', __( 'Please choose a class.', 'mizuki-booking' ) );
+		}
+
+		$clean_dates = array();
+		foreach ( (array) $dates as $date ) {
+			$date = MZK_Utils::sanitize_date( trim( $date ) );
+			if ( $date ) {
+				$clean_dates[ $date ] = true;
+			}
+		}
+		$clean_dates = array_keys( $clean_dates );
+
+		$clean_slots = array();
+		foreach ( (array) $slots as $slot ) {
+			$time = MZK_Utils::sanitize_time( $slot['time'] ?? '' );
+			if ( ! $time ) {
+				continue;
+			}
+			$clean_slots[] = array(
+				'time'     => $time,
+				'duration' => max( 15, (int) ( $slot['duration'] ?? $type->default_duration ) ),
+				'capacity' => max( 1, (int) ( $slot['capacity'] ?? $type->default_capacity ) ),
+			);
+		}
+
+		if ( ! $clean_dates ) {
+			return new WP_Error( 'mzk_no_dates', __( 'Please choose at least one date.', 'mizuki-booking' ) );
+		}
+		if ( ! $clean_slots ) {
+			return new WP_Error( 'mzk_no_slots', __( 'Please add at least one time slot.', 'mizuki-booking' ) );
+		}
+
+		$stats = array(
+			'created' => 0,
+			'skipped' => 0,
+			'blocked' => 0,
+		);
+
+		sort( $clean_dates );
+		$blackouts = MZK_Blackouts::map( $clean_dates[0], end( $clean_dates ), (int) $type->id );
+
+		foreach ( $clean_dates as $date ) {
+			if ( isset( $blackouts[ $date ] ) ) {
+				++$stats['blocked'];
+				continue;
+			}
+
+			foreach ( $clean_slots as $slot ) {
+				global $wpdb;
+				$exists = $wpdb->get_var( // phpcs:ignore WordPress.DB
+					$wpdb->prepare(
+						"SELECT id FROM " . MZK_DB::sessions() . " WHERE class_type_id = %d AND session_date = %s AND start_time = %s", // phpcs:ignore WordPress.DB
+						(int) $type->id,
+						$date,
+						$slot['time']
+					)
+				);
+				if ( $exists ) {
+					++$stats['skipped'];
+					continue;
+				}
+
+				$result = self::save(
+					array(
+						'class_type_id'    => (int) $type->id,
+						'title'            => $title,
+						'session_date'     => $date,
+						'start_time'       => $slot['time'],
+						'duration_minutes' => $slot['duration'],
+						'capacity'         => $slot['capacity'],
+						'status'           => 'open',
+					)
+				);
+
+				if ( is_wp_error( $result ) ) {
+					continue;
+				}
+				++$stats['created'];
+			}
+		}
+
+		return $stats;
+	}
+
 	/* ---------------------------------------------------------------------
 	 * Recurring templates + schedule generation
 	 * ------------------------------------------------------------------ */

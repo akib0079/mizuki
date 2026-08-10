@@ -334,6 +334,74 @@ class MZK_Admin {
 				self::redirect( sanitize_key( $post['return_page'] ?? 'mzk-sessions' ) );
 				break;
 
+			case 'move_session':
+				$result = MZK_Sessions::move(
+					(int) ( $post['id'] ?? 0 ),
+					$post['session_date'] ?? '',
+					$post['start_time'] ?? '',
+					array(
+						'duration_minutes' => (int) ( $post['duration_minutes'] ?? 0 ),
+						'reason'           => sanitize_text_field( $post['reason'] ?? '' ),
+						'skip_emails'      => ! empty( $post['skip_emails'] ),
+					)
+				);
+
+				if ( is_wp_error( $result ) ) {
+					self::add_notice( 'error', $result->get_error_message() );
+				} else {
+					self::add_notice(
+						'success',
+						$result['notified']
+							? sprintf(
+								/* translators: %d: number of students told. */
+								_n( 'Session moved. %d student has been told.', 'Session moved. %d students have been told.', $result['notified'], 'mizuki-booking' ),
+								$result['notified']
+							)
+							: __( 'Session moved. Nobody was booked on it, so no e-mails were sent.', 'mizuki-booking' )
+					);
+				}
+				self::redirect( sanitize_key( $post['return_page'] ?? self::SLUG ) );
+				break;
+
+			case 'bulk_sessions':
+				$dates = preg_split( '/[\s,]+/', (string) ( $post['dates'] ?? '' ), -1, PREG_SPLIT_NO_EMPTY );
+				$slots = array();
+
+				foreach ( (array) ( $post['slot_time'] ?? array() ) as $i => $time ) {
+					if ( '' === trim( (string) $time ) ) {
+						continue;
+					}
+					$slots[] = array(
+						'time'     => $time,
+						'duration' => (int) ( $post['slot_duration'][ $i ] ?? 0 ),
+						'capacity' => (int) ( $post['slot_capacity'][ $i ] ?? 0 ),
+					);
+				}
+
+				$result = MZK_Sessions::bulk_create(
+					(int) ( $post['class_type_id'] ?? 0 ),
+					$dates,
+					$slots,
+					sanitize_text_field( $post['title'] ?? '' )
+				);
+
+				if ( is_wp_error( $result ) ) {
+					self::add_notice( 'error', $result->get_error_message() );
+				} else {
+					self::add_notice(
+						'success',
+						sprintf(
+							/* translators: 1: created, 2: already existed, 3: skipped. */
+							__( '%1$d sessions added. %2$d already existed, %3$d skipped on blocked dates.', 'mizuki-booking' ),
+							$result['created'],
+							$result['skipped'],
+							$result['blocked']
+						)
+					);
+				}
+				self::redirect( 'mzk-sessions', array( 'tab' => 'bulk' ) );
+				break;
+
 			case 'delete_session':
 				$result = MZK_Sessions::delete( (int) ( $post['id'] ?? 0 ), ! empty( $post['force'] ) );
 				self::report( $result, __( 'Session deleted.', 'mizuki-booking' ) );
