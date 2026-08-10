@@ -34,9 +34,14 @@ class MZK_Shortcodes {
 	}
 
 	/**
-	 * Enqueue assets and hand configuration to the script.
+	 * Enqueue the front-end assets and hand configuration to the script.
+	 *
+	 * Every screen that renders plugin markup must call this — not
+	 * wp_enqueue_script() directly. The script is useless without MZK_CFG:
+	 * it would have no REST root and no nonce, and every request would fall
+	 * through to a 404 HTML page.
 	 */
-	private static function enqueue() {
+	public static function ensure_assets() {
 		if ( self::$enqueued ) {
 			return;
 		}
@@ -132,6 +137,7 @@ class MZK_Shortcodes {
 			'bookAndPay'     => __( 'Book and pay', 'mizuki-booking' ),
 			'awaitingNote'   => __( 'Your place is held while the studio confirms it. We will e-mail you as soon as it is approved.', 'mizuki-booking' ),
 			'viewBooking'    => __( 'View my booking', 'mizuki-booking' ),
+			'notReady'       => __( 'The booking system did not load correctly on this page. Please refresh, and tell the studio if it keeps happening.', 'mizuki-booking' ),
 		);
 	}
 
@@ -153,7 +159,7 @@ class MZK_Shortcodes {
 			'mizuki_calendar'
 		);
 
-		self::enqueue();
+		self::ensure_assets();
 
 		$months = (int) $atts['months'];
 		if ( $months < 2 ) {
@@ -195,7 +201,7 @@ class MZK_Shortcodes {
 	 * @return string
 	 */
 	public static function my_bookings() {
-		self::enqueue();
+		self::ensure_assets();
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$booking_id = isset( $_GET['mzk_booking'] ) ? absint( $_GET['mzk_booking'] ) : 0;

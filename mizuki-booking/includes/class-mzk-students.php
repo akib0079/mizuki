@@ -350,7 +350,7 @@ class MZK_Students {
 	 * @return string
 	 */
 	public static function login_shortcode() {
-		wp_enqueue_style( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 
 		if ( is_user_logged_in() ) {
 			$user = wp_get_current_user();
@@ -382,7 +382,7 @@ class MZK_Students {
 	 * @return string
 	 */
 	public static function dashboard_shortcode() {
-		wp_enqueue_style( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 
 		if ( ! is_user_logged_in() ) {
 			return '<div class="mzk-manage"><div class="mzk-notice mzk-notice--info">'

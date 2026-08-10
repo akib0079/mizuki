@@ -38,8 +38,7 @@ class MZK_Manage {
 				: '';
 		}
 
-		wp_enqueue_style( 'mzk-front' );
-		wp_enqueue_script( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 
 		ob_start();
 		include MZK_PATH . 'public/views/manage.php';

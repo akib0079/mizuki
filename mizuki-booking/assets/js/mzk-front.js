@@ -42,8 +42,38 @@
 		return new Date( Number( parts[ 0 ] ), Number( parts[ 1 ] ) - 1, Number( parts[ 2 ] ) );
 	}
 
+	/**
+	 * Build a REST URL safely.
+	 *
+	 * With plain permalinks rest_url() returns ".../?rest_route=/mizuki/v1", which
+	 * already contains a "?". Gluing "?class_type=x" on the end produced a URL with
+	 * two query markers, so WordPress served an HTML page and JSON.parse blew up.
+	 */
+	function apiUrl( path, query ) {
+		var root = String( CFG.root || '' ).replace( /\/$/, '' );
+		var url = root + ( '/' === path.charAt( 0 ) ? path : '/' + path );
+		var sep = url.indexOf( '?' ) === -1 ? '?' : '&';
+
+		Object.keys( query || {} ).forEach( function ( key ) {
+			if ( undefined === query[ key ] || null === query[ key ] || '' === query[ key ] ) {
+				return;
+			}
+			url += sep + encodeURIComponent( key ) + '=' + encodeURIComponent( query[ key ] );
+			sep = '&';
+		} );
+
+		return url;
+	}
+
 	function api( path, options ) {
 		options = options || {};
+
+		// Without MZK_CFG the request would hit a 404 HTML page and surface as an
+		// unreadable "JSON.parse" error. Fail with something actionable instead.
+		if ( ! CFG.root ) {
+			return Promise.reject( new Error( I18N.notReady || 'The booking system did not load correctly on this page.' ) );
+		}
+
 		var opts = {
 			method: options.method || 'GET',
 			headers: {
@@ -55,7 +85,7 @@
 		if ( options.body ) {
 			opts.body = JSON.stringify( options.body );
 		}
-		return fetch( CFG.root + path, opts ).then( function ( response ) {
+		return fetch( apiUrl( path, options.query ), opts ).then( function ( response ) {
 			return response.json().then( function ( data ) {
 				if ( ! response.ok ) {
 					var err = new Error( ( data && data.message ) || I18N.error );
@@ -91,12 +121,7 @@
 		clear( this.root );
 		this.root.appendChild( el( 'div', 'mzk-loading', I18N.loading ) );
 
-		var query = '/calendar';
-		if ( this.classSlug ) {
-			query += '?class_type=' + encodeURIComponent( this.classSlug );
-		}
-
-		api( query )
+		api( '/calendar', { query: { class_type: this.classSlug } } )
 			.then( function ( data ) {
 				self.data = data;
 				self.render();
@@ -512,7 +537,7 @@
 		this.root.appendChild( el( 'div', 'mzk-loading', I18N.loading ) );
 
 		if ( this.bookingId ) {
-			api( '/bookings/' + this.bookingId + '?token=' + encodeURIComponent( this.token ) )
+			api( '/bookings/' + this.bookingId, { query: { token: this.token } } )
 				.then( function ( data ) {
 					clear( self.root );
 					self.root.appendChild( self.renderBooking( data.booking, data.alternates ) );
@@ -654,7 +679,7 @@
 		if ( alternates ) {
 			render( alternates );
 		} else {
-			api( '/bookings/' + booking.id + '?token=' + encodeURIComponent( this.token ) )
+			api( '/bookings/' + booking.id, { query: { token: this.token } } )
 				.then( function ( data ) {
 					render( data.alternates );
 				} )
@@ -723,12 +748,7 @@
 		};
 		document.addEventListener( 'keydown', this.onKey );
 
-		var query = '/calendar';
-		if ( this.classSlug ) {
-			query += '?class_type=' + encodeURIComponent( this.classSlug );
-		}
-
-		api( query )
+		api( '/calendar', { query: { class_type: this.classSlug } } )
 			.then( function ( data ) {
 				self.data = data;
 				self.sessions = [];

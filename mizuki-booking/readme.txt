@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,11 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.4.1 =
+* Fixed: Book now failed with a JSON error. The classes page loaded the script without its configuration, so it had no address to call.
+* Fixed: booking requests broke on sites using plain permalinks, because query strings were appended to a REST URL that already had one.
+* If the script ever loads without its configuration again, it now says so in plain words instead of showing a JSON error.
 
 = 3.4.0 =
 * Move a session to another date or time. Students keep their place and are e-mailed the change automatically - for when the studio has to be away.

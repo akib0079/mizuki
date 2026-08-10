@@ -145,7 +145,7 @@ class MZK_Account {
 				. esc_html__( 'Please log in to see your course balance.', 'mizuki-booking' )
 				. '</p></div>';
 		}
-		wp_enqueue_style( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 		return self::courses_markup( self::current_enrollments() );
 	}
 

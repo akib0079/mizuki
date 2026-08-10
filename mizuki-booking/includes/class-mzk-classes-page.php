@@ -41,8 +41,7 @@ class MZK_Classes_Page {
 			'mizuki_classes'
 		);
 
-		wp_enqueue_style( 'mzk-front' );
-		wp_enqueue_script( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$requested = isset( $_GET['class'] ) ? sanitize_title( wp_unslash( $_GET['class'] ) ) : '';

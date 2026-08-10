@@ -246,7 +246,7 @@ class MZK_Woo {
 			)
 		);
 
-		wp_enqueue_style( 'mzk-front' );
+		MZK_Shortcodes::ensure_assets();
 
 		echo '<div class="mzk-product-picker mzk-calendar">';
 		echo '<label class="mzk-field"><span class="mzk-field__label">' . esc_html__( 'Choose your session', 'mizuki-booking' ) . ' *</span>';
