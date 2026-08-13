@@ -1272,6 +1272,66 @@ body.mzk-modal-open {
 	transition: width 0.6s var(--mzk-ease);
 }
 
+/* Course student portal — the balance is the thing they came to see, so it
+   leads, at a size you can read across the room. */
+
+.mzk-root .mzk-portal__course {
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-top: 3px solid var(--mzk-accent);
+	padding: 26px 24px 24px;
+	margin-bottom: 22px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+}
+
+.mzk-root .mzk-portal__course .mzk-dash__title {
+	margin-top: 0;
+}
+
+.mzk-root .mzk-portal__figures {
+	display: flex;
+	gap: 32px;
+	flex-wrap: wrap;
+	margin-bottom: 18px;
+}
+
+.mzk-root .mzk-figure {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.mzk-root .mzk-figure__num {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 2em;
+	line-height: 1.1;
+	color: var(--mzk-accent);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-root .mzk-figure__num--sm {
+	font-size: 1.05em;
+	color: var(--mzk-text);
+	align-self: end;
+	padding-bottom: 6px;
+}
+
+.mzk-root .mzk-figure__label {
+	font-size: 0.72em;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-portal__cta {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 18px 0 0;
+}
+
 .mzk-root .mzk-auth__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

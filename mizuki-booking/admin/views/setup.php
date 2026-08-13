@@ -333,6 +333,8 @@ foreach ( $pages as $page ) {
 					</td>
 				</tr>
 				<tr><td><code>[mizuki_calendar months="3" view="list"]</code></td><td><?php esc_html_e( 'More months, or a plain list instead of a grid', 'mizuki-booking' ); ?></td></tr>
+				<tr><td><code>[mizuki_course_portal]</code></td><td><?php esc_html_e( 'Course students: log in, see the balance, book with no payment', 'mizuki-booking' ); ?></td></tr>
+				<tr><td><code>[mizuki_course_portal course="ifda"]</code></td><td><?php esc_html_e( 'The same, restricted to one course', 'mizuki-booking' ); ?></td></tr>
 				<tr><td><code>[mizuki_login]</code></td><td><?php esc_html_e( 'Student login and registration', 'mizuki-booking' ); ?></td></tr>
 				<tr><td><code>[mizuki_dashboard]</code></td><td><?php esc_html_e( 'Student area: classes, course balance, details', 'mizuki-booking' ); ?></td></tr>
 				<tr><td><code>[mizuki_my_bookings]</code></td><td><?php esc_html_e( 'Manage a single booking from an e-mail link', 'mizuki-booking' ); ?></td></tr>

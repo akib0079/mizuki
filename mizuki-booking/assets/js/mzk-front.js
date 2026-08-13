@@ -717,9 +717,11 @@
 	 * "Book now" on a class card opens the whole flow in a dialog: pick a date,
 	 * pick a session, fill in your details, done — without leaving the page.
 	 */
-	function BookModal( classSlug, className ) {
+	function BookModal( classSlug, className, enrolled ) {
 		this.classSlug = classSlug;
 		this.className = className || '';
+		// A course student already holds a package: never ask them to join again.
+		this.skipEnrolStep = !! enrolled;
 		this.sessions = [];
 		this.selected = null;
 		this.open();
@@ -1003,7 +1005,11 @@
 				return;
 			}
 			event.preventDefault();
-			new BookModal( trigger.getAttribute( 'data-mzk-book' ), trigger.getAttribute( 'data-mzk-class-name' ) );
+			new BookModal(
+				trigger.getAttribute( 'data-mzk-book' ),
+				trigger.getAttribute( 'data-mzk-class-name' ),
+				'1' === trigger.getAttribute( 'data-mzk-enrolled' )
+			);
 		} );
 
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-mzk-calendar]' ), function ( node ) {

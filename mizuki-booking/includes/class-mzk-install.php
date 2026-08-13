@@ -26,6 +26,7 @@ class MZK_Install {
 			'reminder_days_before' => 2,
 			'reminder_hour'        => 9,
 			'classes_page_id'      => 0,
+			'portal_page_id'       => 0,
 			'booking_page_id'      => 0,
 			'manage_page_id'       => 0,
 			'login_page_id'        => 0,

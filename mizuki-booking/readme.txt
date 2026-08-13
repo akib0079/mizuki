@@ -4,7 +4,7 @@ Tags: booking, calendar, classes, workshop, courses
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.5.1
+Stable tag: 3.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,12 @@ Built for mizuki.com.sg.
 * `[mizuki_my_bookings]` — student self-service: view, reschedule, cancel.
 
 == Changelog ==
+
+= 3.6.0 =
+* New course student portal, [mizuki_course_portal]: students sign in with their e-mail, see sessions left and the date to finish by, and book with no payment step. One session comes off the balance and the booking is confirmed immediately.
+* Add course="ifda" to restrict a portal page to a single course. Students only see the sessions for courses they hold.
+* Students who already hold a package go straight to the dates instead of being asked to join the course again.
+* Setup generates the Course Students page alongside the others.
 
 = 3.5.1 =
 * Course classes now explain themselves before asking for details: the dialog offers "Join this course" first, with a way through for students who already have a package.

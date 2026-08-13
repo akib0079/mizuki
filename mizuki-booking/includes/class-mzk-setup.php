@@ -34,6 +34,13 @@ class MZK_Setup {
 				'intro'     => __( 'Every class we run, what to expect, and when the next dates are.', 'mizuki-booking' ),
 				'desc'      => __( 'What each class is, what it costs, and an Enrol button. The page to link from your menu.', 'mizuki-booking' ),
 			),
+			'portal_page_id'    => array(
+				'title'     => __( 'Course Students', 'mizuki-booking' ),
+				'slug'      => 'course-students',
+				'shortcode' => '[mizuki_course_portal]',
+				'intro'     => __( 'Sign in to book your course sessions and see how many you have left.', 'mizuki-booking' ),
+				'desc'      => __( 'IFDA and Preserved Flower students: log in, see their balance, book without paying again.', 'mizuki-booking' ),
+			),
 			'booking_page_id'   => array(
 				'title'     => __( 'Book a Class', 'mizuki-booking' ),
 				'slug'      => 'book-a-class',
