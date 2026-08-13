@@ -1272,64 +1272,330 @@ body.mzk-modal-open {
 	transition: width 0.6s var(--mzk-ease);
 }
 
-/* Course student portal — the balance is the thing they came to see, so it
-   leads, at a size you can read across the room. */
+/* ===========================================================================
+   Course student portal
+   ---------------------------------------------------------------------------
+   The studio's public pages are white and airy. The student area is the one
+   place a navy field is right: it marks "this part is yours", it matches the
+   navy panels already used on mizuki.com.sg, and it lets the balance — the
+   number they came to check — carry real weight without shouting.
+   ======================================================================== */
 
-.mzk-root .mzk-portal__course {
-	background: var(--mzk-bg);
-	border: 1px solid var(--mzk-border);
-	border-top: 3px solid var(--mzk-accent);
-	padding: 26px 24px 24px;
-	margin-bottom: 22px;
+.mzk-root .mzk-band {
+	position: relative;
+	background: var(--mzk-primary);
+	color: #fff;
+	padding: 34px 32px 30px;
+	margin-bottom: 30px;
+	overflow: hidden;
 	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
 }
 
-.mzk-root .mzk-portal__course .mzk-dash__title {
-	margin-top: 0;
+/* A hairline of the class colour, so IFDA and Preserved Flower are told apart
+   at a glance when a student holds both. */
+.mzk-root .mzk-band::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 3px;
+	background: var(--mzk-class, var(--mzk-accent));
 }
 
-.mzk-root .mzk-portal__figures {
+@media (min-width: 700px) {
+	.mzk-root .mzk-band {
+		padding: 40px 40px 34px;
+	}
+}
+
+.mzk-root .mzk-band__top {
 	display: flex;
-	gap: 32px;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 20px;
 	flex-wrap: wrap;
-	margin-bottom: 18px;
+	margin-bottom: 26px;
+}
+
+.mzk-root .mzk-band__eyebrow {
+	margin: 0 0 6px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.68em;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	color: rgba(255, 255, 255, 0.62);
+}
+
+.mzk-root.mzk-root .mzk-band__title {
+	margin: 0;
+	color: #fff;
+	font-size: 1.1em;
+}
+
+.mzk-root .mzk-band__who {
+	margin: 0;
+	text-align: right;
+	font-size: 0.82em;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.92);
+}
+
+.mzk-root .mzk-band__who span {
+	display: block;
+	color: rgba(255, 255, 255, 0.6);
+	font-size: 0.92em;
+}
+
+@media (max-width: 560px) {
+	.mzk-root .mzk-band__who {
+		text-align: left;
+	}
+}
+
+/* Figures ------------------------------------------------------------------ */
+
+.mzk-root .mzk-band__figures {
+	display: flex;
+	gap: 40px;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	margin-bottom: 20px;
 }
 
 .mzk-root .mzk-figure {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 4px;
 }
 
 .mzk-root .mzk-figure__num {
 	font-family: var(--mzk-font-head);
 	font-weight: 700;
-	font-size: 2em;
-	line-height: 1.1;
-	color: var(--mzk-accent);
+	font-size: 2.6em;
+	line-height: 0.95;
+	letter-spacing: -0.01em;
+	color: #fff;
 	font-variant-numeric: tabular-nums;
 }
 
-.mzk-root .mzk-figure__num--sm {
+/* The first figure is the one that matters; the rest are context. */
+.mzk-root .mzk-figure:first-child .mzk-figure__num {
+	color: #9fd3c7;
+}
+
+.mzk-root .mzk-figure__when {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
 	font-size: 1.05em;
-	color: var(--mzk-text);
-	align-self: end;
-	padding-bottom: 6px;
+	line-height: 1.2;
+	color: #fff;
+	padding-bottom: 5px;
 }
 
 .mzk-root .mzk-figure__label {
-	font-size: 0.72em;
+	font-size: 0.68em;
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.1em;
+	color: rgba(255, 255, 255, 0.62);
+}
+
+.mzk-root .mzk-band__bar {
+	height: 4px;
+	background: rgba(255, 255, 255, 0.16);
+	margin-bottom: 22px;
+	overflow: hidden;
+}
+
+.mzk-root .mzk-band__bar span {
+	display: block;
+	height: 100%;
+	background: #9fd3c7;
+	transition: width 0.7s var(--mzk-ease);
+}
+
+.mzk-root .mzk-band__actions {
+	display: flex;
+	gap: 18px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.mzk-root .mzk-band__note {
+	margin: 0;
+	font-size: 0.78em;
+	color: rgba(255, 255, 255, 0.66);
+	max-width: 46ch;
+}
+
+.mzk-root .mzk-band__note--warn {
+	color: #f3d7a0;
+}
+
+/* A button on navy: teal would sink into it, so this one is light. */
+.mzk-root.mzk-root .mzk-btn--onband {
+	background-color: #fff !important;
+	border-color: #fff !important;
+	color: var(--mzk-primary) !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--onband:hover,
+.mzk-root.mzk-root .mzk-btn--onband:focus-visible {
+	background-color: #9fd3c7 !important;
+	border-color: #9fd3c7 !important;
+	color: var(--mzk-primary) !important;
+	transform: translateY(-1px);
+}
+
+.mzk-root .mzk-band :focus-visible {
+	outline-color: #9fd3c7;
+}
+
+/* Signed-out and empty variants ------------------------------------------- */
+
+.mzk-root .mzk-band--intro,
+.mzk-root .mzk-band--quiet {
+	padding-bottom: 34px;
+}
+
+.mzk-root .mzk-band__lead {
+	margin: 12px 0 0;
+	max-width: 56ch;
+	font-size: 0.95em;
+	color: rgba(255, 255, 255, 0.86);
+}
+
+.mzk-root .mzk-band__list {
+	display: grid;
+	gap: 8px;
+	margin-top: 22px;
+}
+
+.mzk-root .mzk-band__list li {
+	position: relative;
+	padding-left: 22px;
+	font-size: 0.85em;
+	color: rgba(255, 255, 255, 0.86);
+}
+
+.mzk-root .mzk-band__list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.62em;
+	width: 10px;
+	height: 1px;
+	background: #9fd3c7;
+}
+
+/* Next class --------------------------------------------------------------- */
+
+.mzk-root .mzk-next {
+	display: flex;
+	gap: 22px;
+	align-items: center;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
+	padding: 20px 22px;
+	margin-bottom: 26px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+}
+
+.mzk-root .mzk-next__when {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 66px;
+	height: 66px;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-next__day {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 1.6em;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: var(--mzk-text);
+}
+
+.mzk-root .mzk-next__month {
+	font-size: 0.66em;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
 	color: var(--mzk-muted);
 }
 
-.mzk-root .mzk-portal__cta {
+.mzk-root .mzk-next__body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.mzk-root.mzk-root .mzk-next__title {
+	margin: 0 0 6px;
+	font-size: 0.85em;
+}
+
+.mzk-root .mzk-next__meta {
 	display: flex;
 	gap: 14px;
-	align-items: center;
 	flex-wrap: wrap;
+	margin: 0 0 4px;
+	font-size: 0.82em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-next__badge {
+	flex: 0 0 auto;
+	align-self: flex-start;
+}
+
+@media (max-width: 560px) {
+	.mzk-root .mzk-next {
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+	.mzk-root .mzk-next__badge {
+		order: -1;
+		margin-left: auto;
+	}
+}
+
+/* Empty states and footer -------------------------------------------------- */
+
+.mzk-root .mzk-empty {
+	background: var(--mzk-surface);
+	border: 1px dashed var(--mzk-border-strong);
+	padding: 28px 26px;
+	text-align: center;
+}
+
+.mzk-root .mzk-empty__title {
+	margin: 0 0 6px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.78em;
+	color: var(--mzk-text);
+}
+
+.mzk-root .mzk-empty__actions {
 	margin: 18px 0 0;
+}
+
+.mzk-root .mzk-portal__foot {
+	margin-top: 34px;
+	padding-top: 18px;
+	border-top: 1px solid var(--mzk-border);
+	font-size: 0.82em;
+}
+
+.mzk-root .mzk-portal--out .mzk-auth__grid {
+	margin-top: 4px;
 }
 
 .mzk-root .mzk-auth__grid {
