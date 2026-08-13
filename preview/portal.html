@@ -1,0 +1,2222 @@
+<title>IFDA course portal — design preview</title>
+<style>
+	:root {
+		--ink: #0e141a;
+		--panel: #161d25;
+		--panel-2: #1c242e;
+		--line: #232d38;
+		--text: #c6d0da;
+		--muted: #7f8d9b;
+		--teal: #3f827a;
+		--mint: #9fd3c7;
+		color-scheme: dark;
+	}
+
+	* { box-sizing: border-box; }
+
+	body {
+		margin: 0;
+		background: var(--ink);
+		color: var(--text);
+		font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+		font-size: 14px;
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	header {
+		border-bottom: 1px solid var(--line);
+		background: var(--panel);
+		padding: 18px 24px 0;
+	}
+
+	h1 {
+		margin: 0 0 4px;
+		font-size: 13px;
+		font-weight: 650;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #fff;
+	}
+
+	header p {
+		margin: 0 0 16px;
+		font-size: 12px;
+		color: var(--muted);
+		max-width: 70ch;
+	}
+
+	.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+
+	.tabs button {
+		appearance: none;
+		background: none;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		color: var(--text);
+		font: inherit;
+		font-size: 12px;
+		padding: 9px 14px;
+		cursor: pointer;
+		transition: color 0.15s ease, border-color 0.15s ease;
+	}
+
+	.tabs button:hover { color: #fff; }
+
+	.tabs button[aria-current="true"] {
+		border-bottom-color: var(--mint);
+		color: var(--mint);
+	}
+
+	.toolbar {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+		padding: 12px 24px;
+		border-bottom: 1px solid var(--line);
+		background: #121820;
+	}
+
+	.seg { display: flex; border: 1px solid var(--line); }
+
+	.seg button {
+		appearance: none;
+		background: none;
+		border: 0;
+		border-right: 1px solid var(--line);
+		color: var(--text);
+		font: inherit;
+		font-size: 12px;
+		padding: 6px 11px;
+		cursor: pointer;
+	}
+
+	.seg button:last-child { border-right: 0; }
+	.seg button:hover { background: var(--panel-2); }
+	.seg button[aria-pressed="true"] { background: var(--teal); color: #fff; }
+
+	.toolbar label {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		font-size: 12px;
+		color: var(--muted);
+		cursor: pointer;
+	}
+
+	.readout {
+		margin-left: auto;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 12px;
+		font-variant-numeric: tabular-nums;
+		color: var(--muted);
+	}
+
+	.readout b { color: #fff; font-weight: 600; }
+
+	.note {
+		padding: 10px 24px;
+		font-size: 12px;
+		color: var(--muted);
+		border-bottom: 1px solid var(--line);
+	}
+
+	.note b { color: var(--text); font-weight: 500; }
+
+	.canvas {
+		padding: 26px 22px 70px;
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+		overflow: auto;
+	}
+
+	.device {
+		position: relative;
+		background: #fff;
+		box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+		flex: 0 0 auto;
+	}
+
+	.device iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+
+	.grip {
+		position: absolute;
+		top: 0; right: -13px;
+		width: 13px; height: 100%;
+		cursor: ew-resize;
+		display: flex; align-items: center; justify-content: center;
+	}
+
+	.grip::after {
+		content: "";
+		width: 3px; height: 46px;
+		border-radius: 2px;
+		background: var(--line);
+		transition: background-color 0.15s ease;
+	}
+
+	.grip:hover::after, .grip.is-dragging::after { background: var(--mint); }
+
+	button:focus-visible, .grip:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+	@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+</style>
+
+<header>
+	<h1>IFDA course portal</h1>
+	<p>The three states a course student can land in, running the plugin's real stylesheet. Drag the right edge for any width; the readout shows the live size and ratio.</p>
+	<div class="tabs" id="tabs"></div>
+</header>
+
+<div class="toolbar">
+	<div class="seg" id="sizes"></div>
+	<label><input type="checkbox" id="motion" /> Reduced motion</label>
+	<button class="seg" id="replay" style="padding:6px 11px;cursor:pointer;font-size:12px;background:none;color:var(--text)">Replay animations</button>
+	<div class="readout" id="readout"></div>
+</div>
+
+<p class="note" id="note"></p>
+
+<div class="canvas">
+	<div class="device" id="device">
+		<iframe id="frame" title="Portal preview"></iframe>
+		<div class="grip" id="grip" role="separator" aria-label="Drag to change width" tabindex="0"></div>
+	</div>
+</div>
+
+<script>
+const PLUGIN_CSS = `/**
+ * Mizuki Booking — front-end styles.
+ *
+ * ---------------------------------------------------------------------------
+ * HOW THIS SURVIVES THE THEME
+ * ---------------------------------------------------------------------------
+ * Astra and Elementor style links, buttons, lists and fields globally, and some
+ * of those rules are both specific and !important:
+ *
+ *   .menu-toggle, button, .ast-button, …   { background-color: #3F827A !important;
+ *                                            border-color:     #3F827A !important }
+ *   .ast-single-post .entry-content a, …   { text-decoration: underline }   (0,2,1)
+ *
+ * Every plugin container carries \`.mzk-root\`. Two conventions keep us in charge
+ * without spraying !important everywhere:
+ *
+ *   .mzk-root .thing            (0,2,0)  — normal components
+ *   .mzk-root.mzk-root .thing   (0,3,0)  — "armoured": beats theme rules that
+ *                                          reach (0,2,1), e.g. entry-content a
+ *   !important                           — used ONLY where the theme itself
+ *                                          used !important (button fill/border)
+ *
+ * Repeating the class is a deliberate, cheap specificity bump; it is not a typo.
+ *
+ * ---------------------------------------------------------------------------
+ * DESIGN
+ * ---------------------------------------------------------------------------
+ * Matched to mizuki.com.sg: navy #2D5778, teal #3F827A, text #162A3C, Poppins
+ * body, Radio Canada uppercase headings with 2px tracking, square corners.
+ * Colours read the Elementor kit variables first, so a palette change in the
+ * site kit carries through automatically.
+ *
+ * Motion is one system: two durations, one easing curve, and everything is
+ * disabled under prefers-reduced-motion.
+ */
+
+/* ===========================================================================
+   1. Tokens
+   ======================================================================== */
+
+.mzk-root {
+	--mzk-primary: var(--e-global-color-primary, #2d5778);
+	--mzk-accent: var(--e-global-color-secondary, #3f827a);
+	--mzk-text: var(--e-global-color-text, #162a3c);
+	--mzk-muted: var(--e-global-color-95eba8b, #555d60);
+	--mzk-soft: #4a5560;
+	--mzk-surface: var(--ast-global-color-4, #f0f5fa);
+	--mzk-bg: #ffffff;
+	--mzk-border: #e7e7e7;
+	--mzk-border-strong: #d8d2ce;
+	--mzk-rule: #bcbcbc;
+	--mzk-alert: #9d3b3b;
+	--mzk-alert-bg: #fbf1f1;
+	--mzk-warn: #c9a227;
+
+	--mzk-font: var(--e-global-typography-text-font-family, "Poppins"), sans-serif;
+	--mzk-font-head: var(--e-global-typography-secondary-font-family, "Radio Canada"), "Poppins", sans-serif;
+
+	/* Motion — one curve, two speeds. */
+	--mzk-ease: cubic-bezier(0.22, 0.72, 0.28, 1);
+	--mzk-fast: 0.16s;
+	--mzk-slow: 0.34s;
+
+	--mzk-shadow: 0 10px 28px rgba(22, 42, 60, 0.08);
+	--mzk-shadow-lg: 0 20px 60px rgba(22, 42, 60, 0.26);
+
+	color: var(--mzk-text);
+	font-family: var(--mzk-font);
+	font-weight: 300;
+	font-size: clamp(14px, calc(14px + (18 - 14) * (100vw - 375px) / 1525), 18px);
+	line-height: 1.7;
+	text-align: left;
+}
+
+/* ===========================================================================
+   2. Reset — neutralise what the theme applies globally
+   ======================================================================== */
+
+.mzk-root *,
+.mzk-root *::before,
+.mzk-root *::after {
+	box-sizing: border-box;
+}
+
+.mzk-root.mzk-root ul,
+.mzk-root.mzk-root ol {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.mzk-root.mzk-root li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mzk-root.mzk-root p {
+	margin: 0 0 1em;
+}
+
+.mzk-root.mzk-root p:last-child {
+	margin-bottom: 0;
+}
+
+/* Links: the theme underlines everything inside post content. Buttons and rows
+   have their own affordance, so the underline is a hover cue only. */
+.mzk-root.mzk-root a {
+	text-decoration: none;
+	text-decoration-color: currentColor;
+	text-underline-offset: 3px;
+	color: var(--mzk-accent);
+	transition: color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root a:hover,
+.mzk-root.mzk-root a:focus-visible {
+	color: var(--mzk-primary);
+}
+
+.mzk-root.mzk-root a:not([class]):hover {
+	text-decoration: underline;
+}
+
+.mzk-root.mzk-root h1,
+.mzk-root.mzk-root h2,
+.mzk-root.mzk-root h3,
+.mzk-root.mzk-root h4,
+.mzk-root.mzk-root h5 {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	line-height: 1.35;
+	color: var(--mzk-text);
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.mzk-root.mzk-root button,
+.mzk-root.mzk-root input,
+.mzk-root.mzk-root select,
+.mzk-root.mzk-root textarea {
+	font-family: var(--mzk-font);
+	font-size: inherit;
+	line-height: 1.4;
+	max-width: 100%;
+	margin: 0;
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
+}
+
+.mzk-root.mzk-root table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+/* One focus style everywhere, visible on any background. */
+.mzk-root :focus-visible {
+	outline: 2px solid var(--mzk-primary);
+	outline-offset: 2px;
+}
+
+/* Honour the system preference. Everything below degrades to no motion. */
+@media (prefers-reduced-motion: reduce) {
+	.mzk-root,
+	.mzk-root *,
+	.mzk-root *::before,
+	.mzk-root *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ===========================================================================
+   3. Buttons
+   ======================================================================== */
+
+.mzk-root.mzk-root .mzk-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	-webkit-appearance: none;
+	appearance: none;
+	padding: 14px 28px;
+	border: 1px solid transparent;
+	border-radius: 0;
+	font-family: var(--mzk-font);
+	font-size: 0.72em;
+	font-weight: 700;
+	line-height: 1.4;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color var(--mzk-fast) var(--mzk-ease),
+		border-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
+}
+
+/* The theme forces button colours with !important, so these must match it. */
+.mzk-root.mzk-root .mzk-btn--primary {
+	background-color: var(--mzk-accent) !important;
+	border-color: var(--mzk-accent) !important;
+	color: #fff !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--primary:hover,
+.mzk-root.mzk-root .mzk-btn--primary:focus-visible {
+	background-color: var(--mzk-primary) !important;
+	border-color: var(--mzk-primary) !important;
+	box-shadow: 0 6px 18px rgba(45, 87, 120, 0.24);
+	transform: translateY(-1px);
+}
+
+.mzk-root.mzk-root .mzk-btn--ghost {
+	background-color: transparent !important;
+	border-color: var(--mzk-primary) !important;
+	color: var(--mzk-primary) !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--ghost:hover,
+.mzk-root.mzk-root .mzk-btn--ghost:focus-visible {
+	background-color: var(--mzk-primary) !important;
+	color: #fff !important;
+	transform: translateY(-1px);
+}
+
+.mzk-root.mzk-root .mzk-btn:active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+.mzk-root.mzk-root .mzk-btn[disabled] {
+	opacity: 0.55;
+	cursor: default;
+	transform: none;
+	box-shadow: none;
+}
+
+/* Small inline control: the −/+ and Hide/Show pills. */
+.mzk-root.mzk-root .mzk-mini {
+	display: inline-block;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 4px 10px;
+	font-size: 0.72em;
+	line-height: 1.5;
+	color: var(--mzk-text);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease),
+		background-color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-mini:hover {
+	border-color: var(--mzk-accent);
+	color: var(--mzk-accent);
+	background: var(--mzk-surface);
+}
+
+/* ===========================================================================
+   4. Fields
+   ======================================================================== */
+
+.mzk-root .mzk-form {
+	display: grid;
+	gap: 16px;
+	margin-top: 18px;
+}
+
+.mzk-root .mzk-form--grid {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	align-items: end;
+}
+
+.mzk-root .mzk-form--grid .mzk-form__actions {
+	grid-column: 1 / -1;
+}
+
+.mzk-root .mzk-field {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+}
+
+.mzk-root .mzk-field__label {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.7em;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root.mzk-root .mzk-input {
+	width: 100%;
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid var(--mzk-border);
+	border-radius: 0;
+	background: transparent;
+	color: var(--mzk-text);
+	font-weight: 300;
+	font-size: 0.9em;
+	min-height: 42px;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-input:focus {
+	outline: none;
+	border-bottom-color: var(--mzk-accent);
+	box-shadow: 0 1px 0 0 var(--mzk-accent);
+}
+
+.mzk-root.mzk-root textarea.mzk-input {
+	min-height: 76px;
+	padding-top: 10px;
+	resize: vertical;
+}
+
+.mzk-root .mzk-form__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-top: 4px;
+}
+
+.mzk-root .mzk-honey {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+}
+
+/* ===========================================================================
+   5. Notices, loading, small type
+   ======================================================================== */
+
+.mzk-root .mzk-notice {
+	padding: 12px 14px;
+	border-left: 3px solid transparent;
+	border-radius: 0;
+	font-size: 0.82em;
+	margin: 12px 0 0;
+	animation: mzk-fade-in var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root .mzk-notice--error {
+	background: var(--mzk-alert-bg);
+	border-left-color: var(--mzk-alert);
+	color: var(--mzk-alert);
+}
+
+.mzk-root .mzk-notice--info {
+	background: var(--mzk-surface);
+	border-left-color: var(--mzk-rule);
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-note {
+	color: var(--mzk-muted);
+	font-size: 0.85em;
+}
+
+.mzk-root .mzk-loading {
+	padding: 34px 0;
+	text-align: center;
+	color: var(--mzk-muted);
+	letter-spacing: 0.02em;
+	animation: mzk-pulse 1.4s var(--mzk-ease) infinite;
+}
+
+.mzk-root .mzk-badge {
+	display: inline-block;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	padding: 2px 12px;
+	font-family: var(--mzk-font-head);
+	font-size: 0.72em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: var(--mzk-text);
+	white-space: nowrap;
+}
+
+@keyframes mzk-fade-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes mzk-pulse {
+	0%, 100% { opacity: 1; }
+	50%      { opacity: 0.55; }
+}
+
+@keyframes mzk-rise {
+	from { opacity: 0; transform: translateY(8px); }
+	to   { opacity: 1; transform: none; }
+}
+
+/* ===========================================================================
+   6. Calendar
+   ======================================================================== */
+
+.mzk-root .mzk-filter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 24px;
+}
+
+.mzk-root .mzk-filter__label {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	font-size: 0.8em;
+}
+
+.mzk-root.mzk-root .mzk-filter__select {
+	padding: 10px 14px;
+	border: 1px solid var(--mzk-border);
+	border-radius: 0;
+	background: var(--mzk-bg);
+	color: inherit;
+	font-size: 0.9em;
+	min-height: 44px;
+	transition: border-color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-filter__select:hover {
+	border-color: var(--mzk-accent);
+}
+
+.mzk-root .mzk-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
+	gap: 32px;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.mzk-root .mzk-layout {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+}
+
+.mzk-root .mzk-months {
+	display: grid;
+	gap: 32px;
+	max-height: 760px;
+	overflow-y: auto;
+	padding-right: 6px;
+	scroll-behavior: smooth;
+}
+
+@media (max-width: 900px) {
+	.mzk-root .mzk-months {
+		max-height: none;
+		overflow: visible;
+		padding-right: 0;
+	}
+}
+
+.mzk-root .mzk-month__head {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--mzk-bg);
+	padding: 2px 0 10px;
+}
+
+.mzk-root .mzk-month__title {
+	font-size: 0.95em;
+}
+
+.mzk-root .mzk-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 1px;
+	background: var(--mzk-border);
+	border: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-grid__dow {
+	padding: 8px 0;
+	background: var(--mzk-surface);
+	color: var(--mzk-muted);
+	font-family: var(--mzk-font-head);
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	text-align: center;
+}
+
+.mzk-root .mzk-day {
+	position: relative;
+	aspect-ratio: 1 / 1;
+	min-height: 44px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	background: var(--mzk-bg);
+	cursor: pointer;
+	transition:
+		background-color var(--mzk-fast) var(--mzk-ease),
+		color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root .mzk-day--empty {
+	cursor: default;
+}
+
+.mzk-root .mzk-day--disabled {
+	color: #b6bdc4;
+	cursor: default;
+}
+
+.mzk-root .mzk-day--blackout {
+	background: repeating-linear-gradient(
+		135deg,
+		var(--mzk-bg),
+		var(--mzk-bg) 5px,
+		var(--mzk-surface) 5px,
+		var(--mzk-surface) 10px
+	);
+	color: #a8b1b9;
+}
+
+.mzk-root .mzk-day--open,
+.mzk-root .mzk-day--full {
+	font-weight: 400;
+}
+
+.mzk-root .mzk-day--open:hover,
+.mzk-root .mzk-day--full:hover {
+	background: var(--mzk-surface);
+}
+
+.mzk-root .mzk-day--full {
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-day.is-selected {
+	background: var(--mzk-accent);
+	color: #fff;
+}
+
+.mzk-root .mzk-day.is-selected .mzk-dot {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.mzk-root .mzk-day__num {
+	font-size: 0.85em;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.mzk-root .mzk-day__dots {
+	display: flex;
+	gap: 3px;
+}
+
+.mzk-root .mzk-dot {
+	display: block;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	transition: box-shadow var(--mzk-fast) var(--mzk-ease);
+}
+
+/* ===========================================================================
+   7. Session lists
+   ======================================================================== */
+
+.mzk-root .mzk-panel {
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	padding: 24px;
+}
+
+.mzk-root .mzk-panel__title,
+.mzk-root .mzk-list__date,
+.mzk-root .mzk-alternates h4 {
+	position: relative;
+	padding-bottom: 12px;
+	margin-bottom: 18px;
+	font-size: 0.9em;
+}
+
+.mzk-root .mzk-panel__title::after,
+.mzk-root .mzk-list__date::after,
+.mzk-root .mzk-alternates h4::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 25px;
+	border-top: 1px solid var(--mzk-rule);
+}
+
+.mzk-root .mzk-sessions {
+	display: grid;
+	gap: 12px;
+}
+
+.mzk-root .mzk-session {
+	position: relative;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
+	padding: 16px 18px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		box-shadow var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root .mzk-session:hover {
+	box-shadow: var(--mzk-shadow);
+}
+
+/* A gentle stagger so a day's sessions arrive in sequence, not all at once. */
+.mzk-root .mzk-session:nth-child(2) { animation-delay: 40ms; }
+.mzk-root .mzk-session:nth-child(3) { animation-delay: 80ms; }
+.mzk-root .mzk-session:nth-child(4) { animation-delay: 120ms; }
+.mzk-root .mzk-session:nth-child(n+5) { animation-delay: 160ms; }
+
+.mzk-root .mzk-session--full {
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-session--booked {
+	border-left-color: var(--mzk-primary);
+}
+
+.mzk-root .mzk-session__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-bottom: 6px;
+}
+
+.mzk-root .mzk-session__class {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.82em;
+}
+
+.mzk-root .mzk-session__time {
+	font-size: 0.9em;
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-root .mzk-session__meta {
+	display: flex;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 14px;
+	font-size: 0.78em;
+	color: var(--mzk-muted);
+	letter-spacing: 0.02em;
+}
+
+.mzk-root .mzk-session__seats.is-full {
+	color: var(--mzk-alert);
+}
+
+.mzk-root .mzk-session__tools {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin-top: 12px;
+}
+
+.mzk-root .mzk-success h4 {
+	margin-bottom: 8px;
+	font-size: 0.85em;
+	color: var(--mzk-accent);
+}
+
+.mzk-root .mzk-list__day {
+	margin-bottom: 32px;
+}
+
+/* ===========================================================================
+   8. Classes page
+   ======================================================================== */
+
+.mzk-classes {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 32px;
+}
+
+@media (min-width: 900px) {
+	.mzk-classes {
+		grid-template-columns: repeat(var(--mzk-cols, 3), minmax(0, 1fr));
+	}
+}
+
+.mzk-classes--single {
+	display: block;
+	max-width: 1040px;
+}
+
+.mzk-root .mzk-class {
+	display: flex;
+	flex-direction: column;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-slow) var(--mzk-ease),
+		box-shadow var(--mzk-slow) var(--mzk-ease),
+		transform var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-classes .mzk-class:nth-child(2) { animation-delay: 60ms; }
+.mzk-classes .mzk-class:nth-child(3) { animation-delay: 120ms; }
+.mzk-classes .mzk-class:nth-child(n+4) { animation-delay: 180ms; }
+
+.mzk-root .mzk-class::before {
+	content: "";
+	display: block;
+	height: 3px;
+	background: var(--mzk-class, var(--mzk-accent));
+}
+
+.mzk-root .mzk-class:hover {
+	border-color: var(--mzk-border-strong);
+	box-shadow: var(--mzk-shadow);
+	transform: translateY(-3px);
+}
+
+.mzk-root .mzk-class__media {
+	overflow: hidden;
+	background: var(--mzk-surface);
+	aspect-ratio: 4 / 3;
+}
+
+.mzk-root .mzk-class__media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.6s var(--mzk-ease);
+}
+
+.mzk-root .mzk-class:hover .mzk-class__media img {
+	transform: scale(1.04);
+}
+
+.mzk-root .mzk-class__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	padding: 28px 26px 26px;
+}
+
+.mzk-root .mzk-class__name {
+	margin-bottom: 12px;
+	font-size: 0.85em;
+	line-height: 1.4;
+}
+
+.mzk-root .mzk-class__summary {
+	margin-bottom: 22px;
+	font-size: 0.9em;
+	color: var(--mzk-soft);
+}
+
+.mzk-root .mzk-class__facts {
+	margin-bottom: 22px;
+	border-top: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-class__facts li {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 16px;
+	padding: 11px 0;
+	border-bottom: 1px solid var(--mzk-border);
+	font-size: 0.78em;
+}
+
+.mzk-root .mzk-class__facts > li > span:first-child {
+	color: var(--mzk-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.92em;
+	white-space: nowrap;
+}
+
+.mzk-root .mzk-class__facts strong {
+	font-weight: 600;
+	text-align: right;
+}
+
+.mzk-root .mzk-class__next {
+	margin-bottom: 10px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.7em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-class__dates {
+	margin-bottom: 24px;
+}
+
+.mzk-root .mzk-class__dates li {
+	display: flex;
+	gap: 12px;
+	align-items: baseline;
+	flex-wrap: wrap;
+	padding: 9px 0;
+	border-bottom: 1px dotted var(--mzk-border);
+	font-size: 0.8em;
+	transition: background-color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root .mzk-class__dates li:last-child {
+	border-bottom: 0;
+}
+
+.mzk-root .mzk-class__time {
+	color: var(--mzk-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-root .mzk-class__seats {
+	margin-left: auto;
+	color: var(--mzk-accent);
+	font-size: 0.94em;
+	white-space: nowrap;
+}
+
+.mzk-root .mzk-class__actions {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-top: auto;
+	padding-top: 6px;
+}
+
+/* "More details" reads as a quiet link beside the solid call to action. */
+.mzk-root.mzk-root .mzk-classes .mzk-btn--ghost {
+	border-color: transparent !important;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.mzk-root.mzk-root .mzk-classes .mzk-btn--ghost:hover {
+	background-color: transparent !important;
+	color: var(--mzk-accent) !important;
+	transform: none;
+}
+
+/* Detail: full-width photo, everything underneath. */
+
+.mzk-root .mzk-class--detail::before {
+	height: 4px;
+}
+
+.mzk-root .mzk-class--detail .mzk-class__media {
+	aspect-ratio: 21 / 9;
+}
+
+@media (max-width: 700px) {
+	.mzk-root .mzk-class--detail .mzk-class__media {
+		aspect-ratio: 4 / 3;
+	}
+}
+
+.mzk-root .mzk-class--detail:hover {
+	transform: none;
+	box-shadow: none;
+	border-color: var(--mzk-border);
+}
+
+.mzk-root .mzk-class--detail .mzk-class__body {
+	padding: 36px 32px 32px;
+}
+
+@media (min-width: 900px) {
+	.mzk-root .mzk-class--detail .mzk-class__body {
+		padding: 44px 48px 40px;
+	}
+}
+
+.mzk-root .mzk-class--detail .mzk-class__name {
+	margin-bottom: 14px;
+	font-size: 1.15em;
+}
+
+.mzk-root .mzk-class--detail .mzk-class__summary {
+	max-width: 68ch;
+	font-size: 1.02em;
+	color: var(--mzk-text);
+}
+
+.mzk-root .mzk-class__desc {
+	max-width: 68ch;
+	margin-bottom: 24px;
+	font-size: 0.9em;
+	color: var(--mzk-soft);
+}
+
+.mzk-root .mzk-class--detail .mzk-class__actions {
+	margin-top: 0;
+	margin-bottom: 8px;
+	padding-top: 0;
+}
+
+.mzk-root .mzk-class--detail .mzk-dash__title {
+	margin: 34px 0 16px;
+	padding-top: 26px;
+	border-top: 1px solid var(--mzk-border);
+	font-size: 0.75em;
+}
+
+.mzk-root .mzk-class__dates--full {
+	margin-bottom: 0;
+}
+
+.mzk-root .mzk-class__dates--full li {
+	padding: 12px 0;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-class__dates--full li:hover {
+	background: var(--mzk-surface);
+}
+
+/* ===========================================================================
+   9. Booking dialog
+   ======================================================================== */
+
+body.mzk-modal-open {
+	overflow: hidden;
+}
+
+.mzk-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 5vh 16px;
+	overflow-y: auto;
+	background: rgba(22, 42, 60, 0.55);
+	-webkit-backdrop-filter: blur(3px);
+	backdrop-filter: blur(3px);
+	animation: mzk-fade var(--mzk-fast, 0.16s) ease-out;
+}
+
+@keyframes mzk-fade {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@keyframes mzk-modal-in {
+	from { opacity: 0; transform: translateY(-10px) scale(0.985); }
+	to   { opacity: 1; transform: none; }
+}
+
+.mzk-modal__box {
+	width: 100%;
+	max-width: 520px;
+	background: var(--mzk-bg);
+	border-top: 3px solid var(--mzk-accent);
+	box-shadow: var(--mzk-shadow-lg);
+	animation: mzk-modal-in var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root .mzk-modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 22px 24px 16px;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-modal__title {
+	font-size: 0.82em;
+}
+
+.mzk-root.mzk-root .mzk-modal__close {
+	appearance: none;
+	background: none !important;
+	border: 0 !important;
+	padding: 0 4px;
+	font-size: 26px;
+	line-height: 1;
+	color: var(--mzk-muted);
+	cursor: pointer;
+	transition:
+		color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-modal__close:hover {
+	color: var(--mzk-text);
+	transform: rotate(90deg);
+}
+
+.mzk-root .mzk-modal__body {
+	padding: 22px 24px 26px;
+	max-height: 70vh;
+	overflow-y: auto;
+	scroll-behavior: smooth;
+}
+
+.mzk-root .mzk-modal__step {
+	margin-bottom: 14px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.7em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-modal__dates {
+	display: grid;
+	gap: 8px;
+}
+
+.mzk-root.mzk-root .mzk-slot {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 2px 12px;
+	width: 100%;
+	padding: 12px 14px;
+	text-align: left;
+	appearance: none;
+	background: var(--mzk-bg) !important;
+	border: 1px solid var(--mzk-border) !important;
+	border-radius: 0;
+	color: var(--mzk-text);
+	cursor: pointer;
+	animation: mzk-rise 0.28s var(--mzk-ease) backwards;
+	transition:
+		border-color var(--mzk-fast) var(--mzk-ease),
+		background-color var(--mzk-fast) var(--mzk-ease),
+		transform var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root .mzk-modal__dates li:nth-child(2) .mzk-slot { animation-delay: 30ms; }
+.mzk-root .mzk-modal__dates li:nth-child(3) .mzk-slot { animation-delay: 60ms; }
+.mzk-root .mzk-modal__dates li:nth-child(n+4) .mzk-slot { animation-delay: 90ms; }
+
+.mzk-root.mzk-root .mzk-slot:hover:not(:disabled) {
+	border-color: var(--mzk-accent) !important;
+	background: var(--mzk-surface) !important;
+	transform: translateX(2px);
+}
+
+.mzk-root.mzk-root .mzk-slot:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.mzk-root .mzk-slot__date {
+	font-size: 0.9em;
+	font-weight: 400;
+}
+
+.mzk-root .mzk-slot__time {
+	grid-column: 1;
+	font-size: 0.8em;
+	color: var(--mzk-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-root .mzk-slot__seats {
+	grid-column: 2;
+	grid-row: 1 / 3;
+	align-self: center;
+	font-size: 0.78em;
+	color: var(--mzk-accent);
+	white-space: nowrap;
+}
+
+.mzk-root .mzk-slot.is-full .mzk-slot__seats {
+	color: var(--mzk-alert);
+}
+
+.mzk-root.mzk-root .mzk-modal__back {
+	appearance: none;
+	background: none !important;
+	border: 0 !important;
+	padding: 0;
+	margin-bottom: 14px;
+	font-size: 0.8em;
+	color: var(--mzk-muted);
+	cursor: pointer;
+	transition: color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-modal__back:hover {
+	color: var(--mzk-accent);
+}
+
+.mzk-root .mzk-modal__lead {
+	margin-bottom: 12px;
+	font-size: 0.92em;
+}
+
+.mzk-root .mzk-modal__desc {
+	margin-bottom: 20px;
+	font-size: 0.85em;
+	color: var(--mzk-soft);
+}
+
+.mzk-root .mzk-modal__choice {
+	display: grid;
+	gap: 10px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease);
+}
+
+/* A refusal that offers the way forward needs the link on its own line. */
+.mzk-root .mzk-notice__cta {
+	display: inline-flex;
+	margin-top: 12px;
+}
+
+.mzk-root .mzk-modal__chosen {
+	display: grid;
+	gap: 2px;
+	padding: 12px 14px;
+	margin-bottom: 20px;
+	background: var(--mzk-surface);
+	border-left: 3px solid var(--mzk-accent);
+	font-size: 0.85em;
+	animation: mzk-fade-in var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root .mzk-modal__done {
+	padding: 12px 0 4px;
+	text-align: center;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root .mzk-modal__tick {
+	width: 48px;
+	height: 48px;
+	margin: 0 auto 14px;
+	border-radius: 50%;
+	background: var(--mzk-accent);
+	color: #fff;
+	font-size: 24px;
+	line-height: 48px;
+	animation: mzk-pop 0.42s var(--mzk-ease) backwards;
+}
+
+@keyframes mzk-pop {
+	0%   { opacity: 0; transform: scale(0.6); }
+	60%  { transform: scale(1.08); }
+	100% { opacity: 1; transform: scale(1); }
+}
+
+.mzk-root .mzk-modal__done h4 {
+	margin-bottom: 8px;
+	font-size: 0.8em;
+	letter-spacing: 1.5px;
+}
+
+.mzk-root .mzk-modal__done p {
+	margin-bottom: 16px;
+	font-size: 0.88em;
+	color: var(--mzk-muted);
+}
+
+/* ===========================================================================
+   10. Student area, manager, login
+   ======================================================================== */
+
+.mzk-root .mzk-booking {
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-top: 3px solid var(--mzk-accent);
+	padding: 24px;
+	margin-bottom: 20px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+}
+
+.mzk-root .mzk-booking--cancelled {
+	border-top-color: var(--mzk-rule);
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-booking--waiting {
+	border-top-color: var(--mzk-warn);
+}
+
+.mzk-root .mzk-booking__title {
+	margin-bottom: 10px;
+	font-size: 0.95em;
+}
+
+.mzk-root .mzk-booking__meta {
+	display: flex;
+	gap: 18px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 18px;
+	font-size: 0.85em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-booking__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-root .mzk-alternates {
+	margin-top: 22px;
+	padding-top: 20px;
+	border-top: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-progress {
+	height: 6px;
+	max-width: 260px;
+	margin: 0 0 18px;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+	overflow: hidden;
+}
+
+.mzk-root .mzk-progress span {
+	display: block;
+	height: 100%;
+	background: var(--mzk-accent);
+	transition: width 0.6s var(--mzk-ease);
+}
+
+/* ===========================================================================
+   Course student portal
+   ---------------------------------------------------------------------------
+   The studio's public pages are white and airy. The student area is the one
+   place a navy field is right: it marks "this part is yours", it matches the
+   navy panels already used on mizuki.com.sg, and it lets the balance — the
+   number they came to check — carry real weight without shouting.
+   ======================================================================== */
+
+.mzk-root .mzk-band {
+	position: relative;
+	background: var(--mzk-primary);
+	color: #fff;
+	padding: 34px 32px 30px;
+	margin-bottom: 30px;
+	overflow: hidden;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+}
+
+/* A hairline of the class colour, so IFDA and Preserved Flower are told apart
+   at a glance when a student holds both. */
+.mzk-root .mzk-band::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 3px;
+	background: var(--mzk-class, var(--mzk-accent));
+}
+
+@media (min-width: 700px) {
+	.mzk-root .mzk-band {
+		padding: 40px 40px 34px;
+	}
+}
+
+.mzk-root .mzk-band__top {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 20px;
+	flex-wrap: wrap;
+	margin-bottom: 26px;
+}
+
+.mzk-root .mzk-band__eyebrow {
+	margin: 0 0 6px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.68em;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	color: rgba(255, 255, 255, 0.62);
+}
+
+.mzk-root.mzk-root .mzk-band__title {
+	margin: 0;
+	color: #fff;
+	font-size: 1.1em;
+}
+
+.mzk-root .mzk-band__who {
+	margin: 0;
+	text-align: right;
+	font-size: 0.82em;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.92);
+}
+
+.mzk-root .mzk-band__who span {
+	display: block;
+	color: rgba(255, 255, 255, 0.6);
+	font-size: 0.92em;
+}
+
+@media (max-width: 560px) {
+	.mzk-root .mzk-band__who {
+		text-align: left;
+	}
+}
+
+/* Figures ------------------------------------------------------------------ */
+
+.mzk-root .mzk-band__figures {
+	display: flex;
+	gap: 40px;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	margin-bottom: 20px;
+}
+
+.mzk-root .mzk-figure {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.mzk-root .mzk-figure__num {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 2.6em;
+	line-height: 0.95;
+	letter-spacing: -0.01em;
+	color: #fff;
+	font-variant-numeric: tabular-nums;
+}
+
+/* The first figure is the one that matters; the rest are context. */
+.mzk-root .mzk-figure:first-child .mzk-figure__num {
+	color: #9fd3c7;
+}
+
+.mzk-root .mzk-figure__when {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 1.05em;
+	line-height: 1.2;
+	color: #fff;
+	padding-bottom: 5px;
+}
+
+.mzk-root .mzk-figure__label {
+	font-size: 0.68em;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: rgba(255, 255, 255, 0.62);
+}
+
+.mzk-root .mzk-band__bar {
+	height: 4px;
+	background: rgba(255, 255, 255, 0.16);
+	margin-bottom: 22px;
+	overflow: hidden;
+}
+
+.mzk-root .mzk-band__bar span {
+	display: block;
+	height: 100%;
+	background: #9fd3c7;
+	transition: width 0.7s var(--mzk-ease);
+}
+
+.mzk-root .mzk-band__actions {
+	display: flex;
+	gap: 18px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.mzk-root .mzk-band__note {
+	margin: 0;
+	font-size: 0.78em;
+	color: rgba(255, 255, 255, 0.66);
+	max-width: 46ch;
+}
+
+.mzk-root .mzk-band__note--warn {
+	color: #f3d7a0;
+}
+
+/* A button on navy: teal would sink into it, so this one is light. */
+.mzk-root.mzk-root .mzk-btn--onband {
+	background-color: #fff !important;
+	border-color: #fff !important;
+	color: var(--mzk-primary) !important;
+}
+
+.mzk-root.mzk-root .mzk-btn--onband:hover,
+.mzk-root.mzk-root .mzk-btn--onband:focus-visible {
+	background-color: #9fd3c7 !important;
+	border-color: #9fd3c7 !important;
+	color: var(--mzk-primary) !important;
+	transform: translateY(-1px);
+}
+
+.mzk-root .mzk-band :focus-visible {
+	outline-color: #9fd3c7;
+}
+
+/* Signed-out and empty variants ------------------------------------------- */
+
+.mzk-root .mzk-band--intro,
+.mzk-root .mzk-band--quiet {
+	padding-bottom: 34px;
+}
+
+.mzk-root .mzk-band__lead {
+	margin: 12px 0 0;
+	max-width: 56ch;
+	font-size: 0.95em;
+	color: rgba(255, 255, 255, 0.86);
+}
+
+.mzk-root .mzk-band__list {
+	display: grid;
+	gap: 8px;
+	margin-top: 22px;
+}
+
+.mzk-root .mzk-band__list li {
+	position: relative;
+	padding-left: 22px;
+	font-size: 0.85em;
+	color: rgba(255, 255, 255, 0.86);
+}
+
+.mzk-root .mzk-band__list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.62em;
+	width: 10px;
+	height: 1px;
+	background: #9fd3c7;
+}
+
+/* Next class --------------------------------------------------------------- */
+
+.mzk-root .mzk-next {
+	display: flex;
+	gap: 22px;
+	align-items: center;
+	background: var(--mzk-bg);
+	border: 1px solid var(--mzk-border);
+	border-left: 3px solid var(--mzk-class, var(--mzk-accent));
+	padding: 20px 22px;
+	margin-bottom: 26px;
+	animation: mzk-rise var(--mzk-slow) var(--mzk-ease) backwards;
+}
+
+.mzk-root .mzk-next__when {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 66px;
+	height: 66px;
+	background: var(--mzk-surface);
+	border: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-next__day {
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 1.6em;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: var(--mzk-text);
+}
+
+.mzk-root .mzk-next__month {
+	font-size: 0.66em;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-next__body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.mzk-root.mzk-root .mzk-next__title {
+	margin: 0 0 6px;
+	font-size: 0.85em;
+}
+
+.mzk-root .mzk-next__meta {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin: 0 0 4px;
+	font-size: 0.82em;
+	color: var(--mzk-muted);
+}
+
+.mzk-root .mzk-next__badge {
+	flex: 0 0 auto;
+	align-self: flex-start;
+}
+
+@media (max-width: 560px) {
+	.mzk-root .mzk-next {
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+	.mzk-root .mzk-next__badge {
+		order: -1;
+		margin-left: auto;
+	}
+}
+
+/* Empty states and footer -------------------------------------------------- */
+
+.mzk-root .mzk-empty {
+	background: var(--mzk-surface);
+	border: 1px dashed var(--mzk-border-strong);
+	padding: 28px 26px;
+	text-align: center;
+}
+
+.mzk-root .mzk-empty__title {
+	margin: 0 0 6px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	font-size: 0.78em;
+	color: var(--mzk-text);
+}
+
+.mzk-root .mzk-empty__actions {
+	margin: 18px 0 0;
+}
+
+.mzk-root .mzk-portal__foot {
+	margin-top: 34px;
+	padding-top: 18px;
+	border-top: 1px solid var(--mzk-border);
+	font-size: 0.82em;
+}
+
+.mzk-root .mzk-portal--out .mzk-auth__grid {
+	margin-top: 4px;
+}
+
+.mzk-root .mzk-auth__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 20px;
+	align-items: start;
+}
+
+.mzk-root .mzk-auth__foot {
+	margin-top: 20px;
+	text-align: center;
+}
+
+.mzk-root .mzk-dash__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 20px;
+	flex-wrap: wrap;
+	padding-bottom: 20px;
+	margin-bottom: 24px;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-dash__hello {
+	margin-bottom: 4px;
+	font-size: 1em;
+}
+
+.mzk-root .mzk-dash__actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mzk-root .mzk-dash__title {
+	margin: 32px 0 14px;
+	font-size: 0.82em;
+}
+
+.mzk-root .mzk-dash__title:first-of-type {
+	margin-top: 0;
+}
+
+.mzk-root .mzk-history {
+	border-top: 1px solid var(--mzk-border);
+}
+
+.mzk-root .mzk-history li {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--mzk-border);
+	font-size: 0.85em;
+	transition: background-color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root .mzk-history li:hover {
+	background: var(--mzk-surface);
+}
+
+.mzk-root .mzk-history__date {
+	min-width: 120px;
+	color: var(--mzk-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.mzk-root .mzk-history__class {
+	flex: 1 1 auto;
+}
+
+.mzk-root .mzk-studio__tabs {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+	margin-bottom: 24px;
+	border-bottom: 1px solid var(--mzk-border);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab {
+	position: relative;
+	padding: 10px 18px;
+	margin-bottom: -1px;
+	font-family: var(--mzk-font-head);
+	font-weight: 700;
+	font-size: 0.72em;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: var(--mzk-muted);
+	text-decoration: none;
+	border-bottom: 2px solid transparent;
+	transition: color var(--mzk-fast) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	background: var(--mzk-accent);
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform var(--mzk-slow) var(--mzk-ease);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab:hover {
+	color: var(--mzk-text);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab.is-active {
+	color: var(--mzk-accent);
+}
+
+.mzk-root.mzk-root .mzk-studio__tab.is-active::after,
+.mzk-root.mzk-root .mzk-studio__tab:hover::after {
+	transform: scaleX(1);
+}
+
+.mzk-root .mzk-inline-form {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 12px 0;
+}
+
+.mzk-root.mzk-root .mzk-inline-form .mzk-input {
+	flex: 1 1 220px;
+	padding: 8px 10px;
+	border: 1px solid var(--mzk-border);
+	min-height: 40px;
+}
+
+/* Product page session picker */
+
+.mzk-root.mzk-product-picker {
+	margin: 0 0 20px;
+}
+
+.mzk-root.mzk-root .mzk-product-picker .mzk-input,
+.mzk-product-picker .mzk-input {
+	padding: 10px 12px;
+	border: 1px solid var(--mzk-border);
+	background: var(--mzk-bg);
+}
+
+.mzk-product-picker .mzk-note {
+	margin: 8px 0 0;
+	font-size: 0.78em;
+}
+`;
+
+const SHELL = `
+	body { margin: 0; padding: 32px 22px 60px; background: #fff; }
+	.wrap { max-width: 900px; margin: 0 auto; }
+	body, .mzk-root { font-family: Poppins, "Helvetica Neue", system-ui, sans-serif; }
+	.mzk-root h1,.mzk-root h2,.mzk-root h3,.mzk-root h4,
+	.mzk-root .mzk-band__eyebrow,.mzk-root .mzk-figure__num,.mzk-root .mzk-figure__when,
+	.mzk-root .mzk-badge,.mzk-root .mzk-field__label,.mzk-root .mzk-btn,.mzk-root .mzk-next__day {
+		font-family: "Radio Canada", Poppins, system-ui, sans-serif;
+	}
+`;
+
+const SIGNED_IN = `<div class="wrap">
+	<div class="mzk-root mzk-manage mzk-portal">
+		<section class="mzk-band" style="--mzk-class:#55708a">
+			<div class="mzk-band__top">
+				<div>
+					<p class="mzk-band__eyebrow">My course</p>
+					<h3 class="mzk-band__title">IFDA</h3>
+				</div>
+				<p class="mzk-band__who">Wei Lin Tan<span>wei.lin@example.com</span></p>
+			</div>
+			<div class="mzk-band__figures">
+				<div class="mzk-figure"><span class="mzk-figure__num">12</span><span class="mzk-figure__label">sessions left</span></div>
+				<div class="mzk-figure"><span class="mzk-figure__num">13</span><span class="mzk-figure__label">used of 25</span></div>
+				<div class="mzk-figure mzk-figure--date"><span class="mzk-figure__when">30 June 2027</span><span class="mzk-figure__label">to finish — 312 days left</span></div>
+			</div>
+			<div class="mzk-band__bar"><span style="width:0" data-grow="52"></span></div>
+			<div class="mzk-band__actions">
+				<button type="button" class="mzk-btn mzk-btn--onband">Book a session</button>
+				<p class="mzk-band__note">Nothing to pay — one session comes off your balance when you book.</p>
+			</div>
+		</section>
+
+		<h4 class="mzk-dash__title">Your next class</h4>
+		<article class="mzk-next" style="--mzk-class:#55708a">
+			<div class="mzk-next__when"><span class="mzk-next__day">18</span><span class="mzk-next__month">Aug</span></div>
+			<div class="mzk-next__body">
+				<h3 class="mzk-next__title">IFDA</h3>
+				<p class="mzk-next__meta"><span>Tuesday</span><span>10:00 am – 1:00 pm</span><span>3 hrs</span></p>
+				<p class="mzk-note">Need to change it? Use “My booked sessions” below.</p>
+			</div>
+			<span class="mzk-badge mzk-next__badge">Confirmed</span>
+		</article>
+
+		<h4 class="mzk-dash__title">My booked sessions</h4>
+		<div class="mzk-booking">
+			<h3 class="mzk-booking__title">IFDA</h3>
+			<div class="mzk-booking__meta"><span>Wednesday 19 August 2026</span><span>7:00 – 9:30 pm</span><span class="mzk-badge">Confirmed</span></div>
+			<div class="mzk-booking__actions">
+				<button class="mzk-btn mzk-btn--primary">Reschedule</button>
+				<button class="mzk-btn mzk-btn--ghost">Cancel booking</button>
+			</div>
+		</div>
+
+		<h4 class="mzk-dash__title">My history</h4>
+		<ul class="mzk-history">
+			<li><span class="mzk-history__date">4 August 2026</span><span class="mzk-history__class">IFDA · 10:00 am – 1:00 pm</span><span class="mzk-badge">Attended</span></li>
+			<li><span class="mzk-history__date">29 July 2026</span><span class="mzk-history__class">IFDA · 7:00 – 9:30 pm</span><span class="mzk-badge">Attended</span></li>
+			<li><span class="mzk-history__date">22 July 2026</span><span class="mzk-history__class">IFDA · 10:00 am – 1:00 pm</span><span class="mzk-badge">Attended</span></li>
+		</ul>
+
+		<p class="mzk-portal__foot"><a href="#">Log out</a></p>
+	</div></div>`;
+
+const TWO_COURSES = SIGNED_IN.replace(
+	'<h4 class="mzk-dash__title">Your next class</h4>',
+	`<section class="mzk-band" style="--mzk-class:#8fa9a5">
+		<div class="mzk-band__top">
+			<div><p class="mzk-band__eyebrow">My course</p><h3 class="mzk-band__title">Preserved Flower</h3></div>
+			<p class="mzk-band__who">Wei Lin Tan<span>wei.lin@example.com</span></p>
+		</div>
+		<div class="mzk-band__figures">
+			<div class="mzk-figure"><span class="mzk-figure__num">3</span><span class="mzk-figure__label">sessions left</span></div>
+			<div class="mzk-figure"><span class="mzk-figure__num">22</span><span class="mzk-figure__label">used of 25</span></div>
+			<div class="mzk-figure mzk-figure--date"><span class="mzk-figure__when">14 October 2026</span><span class="mzk-figure__label">to finish — 63 days left</span></div>
+		</div>
+		<div class="mzk-band__bar"><span style="width:0" data-grow="88"></span></div>
+		<div class="mzk-band__actions">
+			<button type="button" class="mzk-btn mzk-btn--onband">Book a session</button>
+			<p class="mzk-band__note">Nothing to pay — one session comes off your balance when you book.</p>
+		</div>
+	</section>
+	<h4 class="mzk-dash__title">Your next class</h4>`
+);
+
+const SIGNED_OUT = `<div class="wrap">
+	<div class="mzk-root mzk-manage mzk-portal mzk-portal--out">
+		<section class="mzk-band mzk-band--intro" style="--mzk-class:#55708a">
+			<p class="mzk-band__eyebrow">Student area</p>
+			<h3 class="mzk-band__title">IFDA</h3>
+			<p class="mzk-band__lead">Your course is paid for in full. Sign in to book your lessons on the dates that suit you — there is nothing more to pay.</p>
+			<ul class="mzk-band__list">
+				<li>See how many sessions you have left</li>
+				<li>Book a date in a couple of clicks</li>
+				<li>Change it later if your plans change</li>
+			</ul>
+		</section>
+		<div class="mzk-auth__grid">
+			<div class="mzk-booking">
+				<h3 class="mzk-booking__title">Sign in</h3>
+				<p class="mzk-note">Use the e-mail address you gave the studio when you joined.</p>
+				<form class="mzk-form" onsubmit="return false">
+					<label class="mzk-field"><span class="mzk-field__label">E-mail address</span><input class="mzk-input" value="wei.lin@example.com" /></label>
+					<label class="mzk-field"><span class="mzk-field__label">Password</span><input class="mzk-input" type="password" value="password" /></label>
+					<div class="mzk-form__actions"><button class="mzk-btn mzk-btn--primary">Sign in</button><a class="mzk-btn mzk-btn--ghost" href="#">Forgot password</a></div>
+				</form>
+			</div>
+			<div class="mzk-booking">
+				<h3 class="mzk-booking__title">First time here</h3>
+				<p class="mzk-note">Already joined the IFDA course but not set up a log-in yet? Create one with the same e-mail address you gave the studio, and your sessions will be waiting.</p>
+				<form class="mzk-form" onsubmit="return false">
+					<label class="mzk-field"><span class="mzk-field__label">Full name *</span><input class="mzk-input" /></label>
+					<label class="mzk-field"><span class="mzk-field__label">E-mail address *</span><input class="mzk-input" /></label>
+					<label class="mzk-field"><span class="mzk-field__label">Contact number</span><input class="mzk-input" /></label>
+					<label class="mzk-field"><span class="mzk-field__label">Choose a password *</span><input class="mzk-input" type="password" /></label>
+					<div class="mzk-form__actions"><button class="mzk-btn mzk-btn--primary">Create my log-in</button></div>
+				</form>
+			</div>
+		</div>
+	</div></div>`;
+
+const NO_COURSE = `<div class="wrap">
+	<div class="mzk-root mzk-manage mzk-portal">
+		<section class="mzk-band mzk-band--quiet">
+			<p class="mzk-band__eyebrow">Student area</p>
+			<h3 class="mzk-band__title">Hello, Wei Lin Tan</h3>
+			<p class="mzk-band__lead">We cannot see an IFDA course under wei.lin@example.com yet.</p>
+		</section>
+		<div class="mzk-empty">
+			<p class="mzk-empty__title">What to do next</p>
+			<p class="mzk-note">If you have already joined the course, the studio may have your sessions recorded under a different e-mail address. Let them know which address to use and your sessions will appear here straight away.</p>
+			<p class="mzk-empty__actions"><a class="mzk-btn mzk-btn--primary" href="#">E-mail the studio</a></p>
+		</div>
+		<p class="mzk-portal__foot"><a href="#">Log out</a></p>
+	</div></div>`;
+
+const STATES = {
+	in: {
+		label: 'Signed in',
+		note: 'The balance leads. <b>12</b> is the mint accent — the one figure they came for; the rest stay white. The hairline above the band is the class colour.',
+		html: SIGNED_IN
+	},
+	two: {
+		label: 'Two courses',
+		note: 'A student holding IFDA and Preserved Flower. The <b>hairline colour</b> is what tells the two bands apart at a glance.',
+		html: TWO_COURSES
+	},
+	out: {
+		label: 'Signed out',
+		note: 'These students have already paid, so the page reassures before it asks. Below 560px the two panels stack.',
+		html: SIGNED_OUT
+	},
+	none: {
+		label: 'No course found',
+		note: 'Usually a different e-mail from the one the studio recorded. The page <b>names the address it looked under</b> — the one fact that lets them fix it themselves.',
+		html: NO_COURSE
+	}
+};
+
+const SIZES = [
+	{ label: 'Phone', w: 375, h: 812 },
+	{ label: 'Phone L', w: 430, h: 880 },
+	{ label: 'Tablet', w: 768, h: 1024 },
+	{ label: 'Laptop', w: 1100, h: 860 },
+	{ label: 'Desktop', w: 1440, h: 900 }
+];
+
+const frame = document.getElementById('frame');
+const device = document.getElementById('device');
+const readout = document.getElementById('readout');
+const note = document.getElementById('note');
+const motion = document.getElementById('motion');
+
+let current = 'in';
+let size = { w: 1100, h: 860 };
+
+function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+
+function ratio(w, h) {
+	const g = gcd(w, h);
+	const rw = w / g, rh = h / g;
+	return (rw > 40 || rh > 40) ? (w / h).toFixed(2) + ':1' : rw + ':' + rh;
+}
+
+function paint() {
+	readout.innerHTML = `<b>${size.w}</b> × <b>${size.h}</b> &nbsp; ${ratio(size.w, size.h)}`;
+}
+
+function render() {
+	const state = STATES[current];
+	note.innerHTML = state.note;
+	device.style.width = size.w + 'px';
+	device.style.height = size.h + 'px';
+	paint();
+
+	const doc = frame.contentDocument;
+	doc.open();
+	doc.write(`<!doctype html><html><head><meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<style>${PLUGIN_CSS}</style><style>${SHELL}</style>
+		${motion.checked ? '<style>*,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}</style>' : ''}
+		</head><body>${state.html}</body></html>`);
+	doc.close();
+
+	doc.querySelectorAll('[data-grow]').forEach(el => {
+		requestAnimationFrame(() => { el.style.width = el.getAttribute('data-grow') + '%'; });
+	});
+	doc.addEventListener('click', e => { if (e.target.closest('a[href="#"]')) { e.preventDefault(); } });
+}
+
+const tabs = document.getElementById('tabs');
+Object.entries(STATES).forEach(([key, state]) => {
+	const b = document.createElement('button');
+	b.type = 'button';
+	b.textContent = state.label;
+	b.addEventListener('click', () => {
+		current = key;
+		tabs.querySelectorAll('button').forEach(x => x.setAttribute('aria-current', 'false'));
+		b.setAttribute('aria-current', 'true');
+		render();
+	});
+	tabs.appendChild(b);
+});
+
+const sizeBar = document.getElementById('sizes');
+SIZES.forEach(s => {
+	const b = document.createElement('button');
+	b.type = 'button';
+	b.textContent = s.label;
+	b.addEventListener('click', () => {
+		size = { w: s.w, h: s.h };
+		sizeBar.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+		b.setAttribute('aria-pressed', 'true');
+		render();
+	});
+	sizeBar.appendChild(b);
+});
+
+document.getElementById('replay').addEventListener('click', render);
+motion.addEventListener('change', render);
+
+const grip = document.getElementById('grip');
+grip.addEventListener('pointerdown', e => {
+	e.preventDefault();
+	grip.setPointerCapture(e.pointerId);
+	grip.classList.add('is-dragging');
+	const startX = e.clientX;
+	const from = size.w;
+
+	function move(ev) {
+		size.w = Math.round(Math.max(320, Math.min(1920, from + (ev.clientX - startX))));
+		device.style.width = size.w + 'px';
+		paint();
+		sizeBar.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+	}
+	function up() {
+		grip.classList.remove('is-dragging');
+		grip.removeEventListener('pointermove', move);
+		grip.removeEventListener('pointerup', up);
+	}
+	grip.addEventListener('pointermove', move);
+	grip.addEventListener('pointerup', up);
+});
+
+grip.addEventListener('keydown', e => {
+	const step = e.shiftKey ? 50 : 10;
+	if (e.key === 'ArrowLeft') { size.w = Math.max(320, size.w - step); }
+	else if (e.key === 'ArrowRight') { size.w = Math.min(1920, size.w + step); }
+	else { return; }
+	e.preventDefault();
+	device.style.width = size.w + 'px';
+	paint();
+});
+
+tabs.querySelector('button').setAttribute('aria-current', 'true');
+sizeBar.querySelectorAll('button')[3].setAttribute('aria-pressed', 'true');
+render();
+</script>
